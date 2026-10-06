@@ -349,10 +349,10 @@ img { max-width: 100%; }
         <figcaption>Au bout de 12&nbsp;ans, la durée moyenne de détention<sup class="ref"><a href="#src-24">24</a></sup>, il reste <span data-k="crd12_15" data-f="eur"></span> à rembourser sur le prêt de 15&nbsp;ans et <span data-k="crd12_25" data-f="eur"></span> sur celui de 25&nbsp;ans.</figcaption>
       </figure>
       <figure>
-        <div><h3>Placer la différence&nbsp;: qui gagne après 25&nbsp;ans&nbsp;?</h3><div class="sub">Avance de la stratégie 25&nbsp;ans sur la stratégie 15&nbsp;ans, selon le rendement brut annuel</div></div>
-        <div class="legend"><span><span class="ln" style="background:var(--ink)"></span>Sans frais ni impôt</span><span><span class="ln" style="background:var(--mid)"></span>Dans un PEA (frais 0,38&nbsp;%, prélèvements 18,6&nbsp;%)</span></div>
-        <div class="chart"><canvas id="c-be" aria-label="Écart de patrimoine à 25 ans selon le rendement" role="img"></canvas></div>
-        <figcaption>Même budget mensuel pour les deux ménages (<span data-k="budget" data-f="eur"></span>). Le ménage à 25&nbsp;ans place <span data-k="delta" data-f="eur"></span> par mois dès le départ. Le ménage à 15&nbsp;ans place <span data-k="budget" data-f="eur"></span> par mois une fois son prêt soldé. Sur un Livret A à 1,7&nbsp;%, le prêt court gagne de <span data-k="dLivretAbs" data-f="eur"></span>. Le long passe devant au-delà de <span data-k="bePure" data-f="pct1"></span> net, soit <span data-k="bePea" data-f="pct1"></span> brut dans un PEA.</figcaption>
+        <div><h3>Placer la différence&nbsp;: qui finit le plus riche&nbsp;?</h3><div class="sub">Épargne de chaque ménage au bout de 25&nbsp;ans, quand les deux prêts sont remboursés, selon le rendement de ses placements (PEA, frais et prélèvements sociaux déduits)</div></div>
+        <div class="legend"><span><span class="ln" style="background:var(--court)"></span>Ménage au prêt 15 ans</span><span><span class="ln" style="background:var(--long)"></span>Ménage au prêt 25 ans</span></div>
+        <div class="chart"><canvas id="c-be" aria-label="Épargne de chaque ménage après 25 ans selon le rendement" role="img"></canvas></div>
+        <figcaption>Les deux ménages ont le même budget, <span data-k="budget" data-f="eur"></span> par mois. Celui au prêt 25&nbsp;ans place <span data-k="delta" data-f="eur"></span> par mois pendant 25&nbsp;ans. Celui au prêt 15&nbsp;ans ne place rien pendant 15&nbsp;ans, puis <span data-k="budget" data-f="eur"></span> par mois pendant 10&nbsp;ans. Les courbes se croisent à <span data-k="bePea" data-f="pct1"></span>&nbsp;: en dessous, le prêt court finit plus riche, au-dessus, c'est le prêt long. À 8&nbsp;%, c'est <span data-k="w8A" data-f="eur1000"></span> contre <span data-k="w8B" data-f="eur1000"></span>. Sur un Livret A à 1,7&nbsp;%, sans frais ni impôt, c'est <span data-k="wLivA" data-f="eur1000"></span> contre <span data-k="wLivB" data-f="eur1000"></span>.</figcaption>
       </figure>
       <figure>
         <div><h3>Et si on revend avant&nbsp;?</h3><div class="sub">Avance du 25&nbsp;ans sur le 15&nbsp;ans en cas de revente l'année N, indemnités de remboursement comprises</div></div>
@@ -789,8 +789,8 @@ function computeCase(){
     eff15:L[15].M/CASE.rev, eff15y11:L[15].M/(CASE.rev*Math.pow(1+CASE.g,10)),
     crd12_15:L[15].crd[144], crd12_25:L[25].crd[144],
     bePure:breakeven(cp,0,0,300,false), bePea:breakeven(cp,CASE.fees,CASE.taxPEA,300,false),
-    dLivretAbs:Math.abs(diffAt(cp,CASE.livret,0,0,300,false)),
-    d8:det8.d[300], cross8:cross8,
+    d8:det8.d[300], cross8:cross8, w8A:det8.wa[300], w8B:det8.wb[300],
+    wLivA:pathDiff(cp,CASE.livret,0,0,false).wa[300], wLivB:pathDiff(cp,CASE.livret,0,0,false).wb[300],
     pwin25:mc8[25].pWin, plose25:1-mc8[25].pWin, p10abs:Math.abs(mc8[25].p10), p50:mc8[25].p50, p90:mc8[25].p90, pwin8:mc8[8].pWin,
     pwin25_667:mc667[25].pWin,
     freeA:disc(cp.freeA,0), freeB:disc(cp.freeB,0), freeAr:disc(cp.freeA,CASE.infl), freeBr:disc(cp.freeB,CASE.infl),
@@ -804,8 +804,16 @@ function fillKeys(){
 
 /* ---------- Graphiques ---------- */
 const refLines={ id:'refLines', beforeDatasetsDraw(chart, _a, opts){
-  const lines=opts&&opts.lines; if(!lines||!lines.length) return;
+  const lines=(opts&&opts.lines)||[], zones=(opts&&opts.zones)||[]; if(!lines.length&&!zones.length) return;
   const {ctx, chartArea:a, scales}=chart; ctx.save();
+  // Zones verticales colorées, avec un libellé en bas
+  for(const z of zones){
+    const x0=Math.max(a.left, scales.x.getPixelForValue(z.from)), x1=Math.min(a.right, scales.x.getPixelForValue(z.to));
+    if(!(x1>x0)) continue;
+    ctx.fillStyle=z.color; ctx.fillRect(x0,a.top,x1-x0,a.bottom-a.top);
+    if(z.label){ ctx.fillStyle=z.textColor; ctx.font='600 12px '+(opts.font||'sans-serif'); ctx.textAlign=z.align==='right'?'right':'left';
+      ctx.fillText(z.label, z.align==='right'? x1-8 : x0+8, a.bottom-10); }
+  }
   for(const l of lines){
     const s=scales[l.axis==='x'?'x':'y']; const p=s.getPixelForValue(l.value);
     if(!isFinite(p)) continue;
@@ -885,13 +893,21 @@ function buildStatic(){
     o.plugins.refLines.lines=[{axis:'x', value:12, color:T.axis, textColor:T.muted, label:'12 ans'}];
     mk('c-crd',{type:'line', data:{datasets:[ lineDs('15 ans',pts(L[15]),T.court), lineDs('25 ans',pts(L[25]),T.long) ]}, options:o}); }
 
-  // Écart final selon le rendement brut
+  // Épargne finale de chaque ménage selon le rendement (PEA)
   { const Rs=[]; for(let r=0;r<=10.0001;r+=0.25) Rs.push(+r.toFixed(2));
-    const pure=Rs.map(r=>({x:r, y:diffAt(cp,r/100,0,0,300,false)})), pea=Rs.map(r=>({x:r, y:diffAt(cp,r/100,CASE.fees,CASE.taxPEA,300,false)}));
-    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Rendement brut annuel (%)', xFmt:v=>Number.isInteger(v)? nf0.format(v)+' %':'', yFmt:v=>keur(v), tipFmt:c=>' '+c.dataset.label+' : '+signed(c.raw.y)}),0,10,1);
-    o.plugins.tooltip.callbacks.title=items=>'Rendement brut '+nf2.format(items[0].raw.x)+' %';
-    o.plugins.refLines.lines=[{axis:'y', value:0, color:T.axis},{axis:'x', value:1.7, color:T.axis, textColor:T.muted, label:'Livret A'},{axis:'x', value:8, color:T.axis, textColor:T.muted, label:'8 %'}];
-    mk('c-be',{type:'line', data:{datasets:[ lineDs('Sans frais ni impôt',pure,T.ink), lineDs('PEA',pea,T.mid) ]}, options:o}); }
+    const paths=Rs.map(r=>pathDiff(cp,r/100,CASE.fees,CASE.taxPEA,false));
+    const wa=Rs.map((r,k)=>({x:r, y:paths[k].wa[300]})), wb=Rs.map((r,k)=>({x:r, y:paths[k].wb[300]}));
+    const be=K.bePea*100, mark=c=>c.raw&&c.raw.x===8?5:0;
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Rendement annuel des placements, avant frais et impôts', xFmt:v=>Number.isInteger(v)? nf0.format(v)+' %':'', yFmt:v=>keur(v), yMin:0, tipFmt:c=>' '+c.dataset.label+' : '+eur(c.raw.y)}),0,10,1);
+    o.plugins.tooltip.callbacks.title=items=>'Placements à '+nf2.format(items[0].raw.x)+' % par an';
+    o.plugins.tooltip.callbacks.footer=items=>{ const k=items[0].dataIndex, d=wb[k].y-wa[k].y; return Math.abs(d)<500? 'Égalité' : (d>0? 'Le prêt 25 ans finit devant de ' : 'Le prêt 15 ans finit devant de ')+eur(Math.abs(d)); };
+    o.plugins.tooltip.footerFont={family:T.body,size:12,weight:'600'}; o.plugins.tooltip.footerColor=T.ink;
+    o.plugins.refLines.zones=[{from:0, to:be, color:T.courtWash, textColor:T.court, label:'Le prêt 15 ans gagne'},{from:be, to:10, color:T.longWash, textColor:T.long, label:'Le prêt 25 ans gagne', align:'right'}];
+    o.plugins.refLines.lines=[{axis:'x', value:be, color:T.ink2, label:'Seuil '+pct1(K.bePea)}];
+    mk('c-be',{type:'line', data:{datasets:[
+      lineDs('Ménage au prêt 15 ans',wa,T.court,{pointRadius:mark, pointBorderColor:T.surface, pointBorderWidth:2}),
+      lineDs('Ménage au prêt 25 ans',wb,T.long,{pointRadius:mark, pointBorderColor:T.surface, pointBorderWidth:2})
+    ]}, options:o}); }
 
   // Revente anticipée
   { const years=[...Array(25).keys()].map(k=>k+1);
