@@ -92,7 +92,13 @@ section { padding-block: 3.5rem 1rem; display: flex; flex-direction: column; gap
 section > .head { display: flex; flex-direction: column; gap: .5rem; }
 
 /* Mécanique */
-.formula { font-family: var(--f-data); font-size: .95rem; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1rem 1.25rem; overflow-x: auto; white-space: nowrap; }
+.formula { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: .75rem; }
+.formula .eq { overflow-x: auto; overflow-y: hidden; padding-block: .25rem; }
+.formula math { font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", math; font-size: 1.3rem; color: var(--ink); }
+.formula dl { margin: 0; display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; font-size: .88rem; color: var(--ink-2); }
+.formula dt { display: inline; font-style: italic; font-family: var(--f-display); color: var(--ink); }
+.formula dd { display: inline; margin: 0 0 0 .35rem; }
+.formula dl > div { white-space: nowrap; }
 .mech { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1.5rem; }
 .mech > div { display: flex; flex-direction: column; gap: .4rem; }
 .mech h3 { font-size: 1.05rem; }
@@ -251,7 +257,25 @@ img { max-width: 100%; }
       <h2>Ce qui se passe quand on allonge un prêt</h2>
       <p>Un prêt immobilier à taux fixe se rembourse par mensualités constantes. Chaque mois, on paie les intérêts du capital restant dû, puis on rembourse du capital avec le reste. En France, le taux mensuel est le taux annuel divisé par 12 (méthode proportionnelle)<sup class="ref"><a href="#src-4">4</a></sup>. Allonger la durée baisse la mensualité, mais le capital reste dû plus longtemps et produit des intérêts plus longtemps.</p>
     </div>
-    <div class="formula">mensualité = C × t / (1 − (1 + t)<sup>−n</sup>) + prime d'assurance &nbsp;&nbsp;·&nbsp;&nbsp; t = taux annuel / 12, n = nombre de mois</div>
+    <figure class="formula">
+      <div class="eq">
+        <math display="block" aria-label="M égale C fois t, divisé par 1 moins 1 plus t puissance moins n, plus A">
+          <mi>M</mi><mo>=</mo>
+          <mfrac>
+            <mrow><mi>C</mi><mo>×</mo><mi>t</mi></mrow>
+            <mrow><mn>1</mn><mo>−</mo><msup><mrow><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mi>t</mi><mo stretchy="false">)</mo></mrow><mrow><mo>−</mo><mi>n</mi></mrow></msup></mrow>
+          </mfrac>
+          <mo>+</mo><mi>A</mi>
+        </math>
+      </div>
+      <dl>
+        <div><dt>M</dt><dd>mensualité</dd></div>
+        <div><dt>C</dt><dd>capital emprunté</dd></div>
+        <div><dt>t</dt><dd>taux annuel / 12</dd></div>
+        <div><dt>n</dt><dd>nombre de mois</dd></div>
+        <div><dt>A</dt><dd>prime d'assurance mensuelle</dd></div>
+      </dl>
+    </figure>
     <div class="mech">
       <div>
         <h3>Les intérêts</h3>
