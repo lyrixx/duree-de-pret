@@ -1,0 +1,1089 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Étude sourcée sur la durée optimale d'un crédit immobilier en France : mécanique, facteurs, cas d'étude, simulateur et méthodologie.">
+<title>Court ou long ?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap">
+<style>
+/* Layout : colonne de lecture étroite (~68ch) pour l'argumentaire, qui s'élargit pour les figures et le simulateur. */
+:root {
+  --bg: #f4f6f8;
+  --surface: #fcfcfd;
+  --ink: #14202e;
+  --ink-2: #4b5665;
+  --muted: #7a8391;
+  --line: #dde1e7;
+  --axis: #c3c8d0;
+  --accent: #1f4e79;
+  --accent-wash: #e6eef6;
+  --court: #2a78d6;
+  --long: #eb6834;
+  --mid: #1baf7a;
+  --seq-1: #86b6ef;
+  --seq-2: #2a78d6;
+  --seq-3: #104281;
+  --court-wash: rgba(42,120,214,.12);
+  --long-wash: rgba(235,104,52,.14);
+  --good: #006300;
+  --warn-bg: #fff3d6;
+  --warn-ink: #6b4a00;
+  --bad: #b42d2d;
+  --f-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141a; --surface: #161c23; --ink: #eef1f5; --ink-2: #b9c1cc; --muted: #8a93a0;
+    --line: #29313b; --axis: #3a434e; --accent: #8cb8e6; --accent-wash: #1c2a3a;
+    --court: #3987e5; --long: #d95926; --mid: #199e70;
+    --seq-1: #184f95; --seq-2: #3987e5; --seq-3: #9ec5f4;
+    --court-wash: rgba(57,135,229,.18); --long-wash: rgba(217,89,38,.2);
+    --good: #3fbf3f; --warn-bg: #3a2e10; --warn-ink: #f3d48a; --bad: #ef7b7b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141a; --surface: #161c23; --ink: #eef1f5; --ink-2: #b9c1cc; --muted: #8a93a0;
+  --line: #29313b; --axis: #3a434e; --accent: #8cb8e6; --accent-wash: #1c2a3a;
+  --court: #3987e5; --long: #d95926; --mid: #199e70;
+  --seq-1: #184f95; --seq-2: #3987e5; --seq-3: #9ec5f4;
+  --court-wash: rgba(57,135,229,.18); --long-wash: rgba(217,89,38,.2);
+  --good: #3fbf3f; --warn-bg: #3a2e10; --warn-ink: #f3d48a; --bad: #ef7b7b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 1rem; line-height: 1.6;
+  padding: 0 1rem; padding-block: 0 4rem;
+}
+.wrap { max-width: 68rem; margin: 0 auto; }
+.prose { max-width: 42rem; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.1rem); font-weight: 600; }
+h3 { font-size: 1.2rem; font-weight: 600; }
+p { margin: 0; }
+.stack { display: flex; flex-direction: column; gap: 1rem; }
+.eyebrow { font-family: var(--f-data); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+a { color: var(--accent); }
+.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.c-court { color: var(--court); } .c-long { color: var(--long); }
+.dot { display: inline-block; width: .65em; height: .65em; border-radius: 50%; vertical-align: baseline; margin-right: .35em; }
+.dot.court { background: var(--court); } .dot.long { background: var(--long); } .dot.mid { background: var(--mid); }
+
+/* Hero */
+header.hero { padding-block: 3.5rem 2.5rem; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap: 2.5rem; align-items: end; }
+.hero h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); font-weight: 700; letter-spacing: -.01em; }
+.hero .lede { font-size: 1.15rem; color: var(--ink-2); margin-top: 1rem; max-width: 36rem; }
+.seuil { border-left: 2px solid var(--accent); padding-left: 1.25rem; }
+.seuil .big { font-family: var(--f-display); font-size: clamp(3rem, 8vw, 4.5rem); font-weight: 600; line-height: 1; color: var(--accent); }
+.seuil p { color: var(--ink-2); font-size: .95rem; margin-top: .5rem; }
+nav.toc { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; padding-block: 1rem; font-size: .9rem; border-bottom: 1px solid var(--line); }
+nav.toc a { text-decoration: none; color: var(--ink-2); }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); text-decoration: underline; }
+
+section { padding-block: 3.5rem 1rem; display: flex; flex-direction: column; gap: 1.5rem; }
+section > .head { display: flex; flex-direction: column; gap: .5rem; }
+
+/* Mécanique */
+.formula { font-family: var(--f-data); font-size: .95rem; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1rem 1.25rem; overflow-x: auto; white-space: nowrap; }
+.mech { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1.5rem; }
+.mech > div { display: flex; flex-direction: column; gap: .4rem; }
+.mech h3 { font-size: 1.05rem; }
+.mech p { color: var(--ink-2); font-size: .95rem; }
+
+/* Facteurs */
+.factors { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 0; border-top: 1px solid var(--line); }
+.factor { padding: 1.1rem 1.25rem 1.2rem 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+.factor h3 { font-size: 1.05rem; }
+.factor p { font-size: .92rem; color: var(--ink-2); }
+.tag { align-self: flex-start; font-family: var(--f-data); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; padding: .15rem .5rem; border-radius: 3px; border: 1px solid currentColor; }
+.tag.court { color: var(--court); } .tag.long { color: var(--long); } .tag.dep { color: var(--ink-2); } .tag.neutre { color: var(--muted); }
+
+/* Figures */
+.figs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1.5rem; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1.25rem; display: flex; flex-direction: column; gap: .75rem; min-width: 0; }
+figure h3 { font-size: 1.1rem; }
+figure .sub { font-size: .85rem; color: var(--muted); }
+figcaption { font-size: .9rem; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: .75rem; }
+.chart { position: relative; height: 260px; }
+.chart.tall { height: 320px; }
+.legend { display: flex; flex-wrap: wrap; gap: .25rem 1rem; font-size: .82rem; color: var(--ink-2); }
+.legend .sw { display: inline-block; width: .8rem; height: .8rem; border-radius: 2px; margin-right: .35rem; vertical-align: -1px; }
+.legend .ln { display: inline-block; width: 1rem; height: 2px; margin-right: .35rem; vertical-align: 3px; }
+
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.tablewrap { overflow-x: auto; }
+th, td { text-align: right; padding: .5rem .75rem; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-weight: 500; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
+td.num { font-family: var(--f-data); }
+td.hi { color: var(--accent); font-weight: 500; }
+
+/* Simulateur */
+.sim { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.controls { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); max-height: calc(100vh - 2rem); overflow-y: auto; }
+.group { display: flex; flex-direction: column; gap: .8rem; }
+.group > .eyebrow { border-bottom: 1px solid var(--line); padding-bottom: .35rem; }
+.ctl { display: flex; flex-direction: column; gap: .25rem; }
+.ctl .row { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; font-size: .88rem; }
+.ctl label { color: var(--ink-2); }
+.ctl output { font-family: var(--f-data); font-size: .85rem; color: var(--ink); white-space: nowrap; }
+.ctl .hint { font-size: .75rem; color: var(--muted); }
+input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+input[type=range].court { accent-color: var(--court); } input[type=range].long { accent-color: var(--long); }
+select { font: inherit; font-size: .88rem; padding: .3rem .4rem; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chips button { font: inherit; font-size: .75rem; padding: .2rem .55rem; border: 1px solid var(--line); background: var(--bg); color: var(--ink-2); border-radius: 999px; cursor: pointer; }
+.chips button:hover { border-color: var(--accent); color: var(--accent); }
+.chips button[aria-pressed="true"] { background: var(--accent-wash); border-color: var(--accent); color: var(--accent); }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.derived { font-size: .85rem; color: var(--ink-2); background: var(--accent-wash); border-radius: 4px; padding: .5rem .65rem; }
+
+.results { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+.verdict { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1.25rem; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1rem 1.5rem; align-items: center; }
+.verdict .lab { font-size: .85rem; color: var(--muted); }
+.verdict .val { font-family: var(--f-display); font-size: 1.9rem; font-weight: 600; line-height: 1.1; }
+.verdict p { font-size: .95rem; color: var(--ink-2); }
+.verdict .be { text-align: right; border-left: 1px solid var(--line); padding-left: 1.5rem; }
+.verdict .be .val { color: var(--accent); }
+.kpis { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1.25rem; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: .6rem; min-width: 0; }
+.kpi h3 { font-family: var(--f-body); font-size: .95rem; font-weight: 600; }
+.kpi dl { margin: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .35rem 1rem; font-size: .88rem; }
+.kpi dt { color: var(--ink-2); }
+.kpi dd { margin: 0; font-family: var(--f-data); text-align: right; font-variant-numeric: tabular-nums; }
+.kpi dd.strong { font-weight: 500; color: var(--ink); }
+.flags { display: flex; flex-wrap: wrap; gap: .35rem; min-height: 0; }
+.flag { font-size: .75rem; padding: .15rem .5rem; border-radius: 3px; background: var(--warn-bg); color: var(--warn-ink); }
+.flag.ok { background: transparent; color: var(--good); border: 1px solid currentColor; }
+
+/* Conclusion */
+.concl { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1.5rem; }
+.concl > div { border-top: 2px solid var(--ink); padding-top: .9rem; display: flex; flex-direction: column; gap: .5rem; }
+.concl > div.court { border-color: var(--court); } .concl > div.long { border-color: var(--long); } .concl > div.mix { border-color: var(--accent); }
+.concl p { font-size: .95rem; color: var(--ink-2); }
+ol.rules { margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: .5rem; }
+ol.rules li::marker { font-family: var(--f-data); color: var(--muted); }
+.note { font-size: .85rem; color: var(--muted); }
+footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); display: flex; flex-direction: column; gap: .5rem; }
+
+@media (max-width: 900px) {
+  header.hero { grid-template-columns: minmax(0,1fr); }
+  .sim { grid-template-columns: minmax(0,1fr); }
+  .controls { position: static; max-height: none; }
+  .concl { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 720px) {
+  .figs, .mech, .kpis { grid-template-columns: minmax(0,1fr); }
+  .verdict { grid-template-columns: minmax(0,1fr); }
+  .verdict .be { text-align: left; border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* Ajouts v2 : renvois aux sources, méthodologie, simulateur enrichi */
+sup.ref { font-family: var(--f-data); font-size: .68em; line-height: 0; margin-left: .1em; }
+sup.ref a { text-decoration: none; color: var(--accent); }
+sup.ref a:hover, sup.ref a:focus-visible { text-decoration: underline; }
+.quote { border-left: 2px solid var(--long); padding-left: 1rem; font-family: var(--f-display); font-size: 1.35rem; line-height: 1.35; color: var(--ink); }
+.hero-sub { margin-top: 1rem; font-size: .95rem; color: var(--ink-2); }
+.check { display: flex; align-items: center; gap: .5rem; font-size: .88rem; color: var(--ink-2); }
+.check input { accent-color: var(--accent); width: 1rem; height: 1rem; margin: 0; }
+.verdict .mc { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: .9rem; font-size: .92rem; color: var(--ink-2); }
+.meth { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1.75rem 2.5rem; }
+.meth > div { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.meth h3 { font-size: 1.05rem; }
+.meth p, .meth li { font-size: .93rem; color: var(--ink-2); }
+.meth ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .3rem; }
+.sources { margin: 0; padding-left: 2.2rem; display: flex; flex-direction: column; gap: .45rem; font-size: .85rem; color: var(--ink-2); }
+.sources li::marker { font-family: var(--f-data); color: var(--muted); }
+.sources li:target { background: var(--accent-wash); border-radius: 3px; }
+.sources a { word-break: break-word; }
+select.full { width: 100%; }
+#t-robust thead th { white-space: normal; vertical-align: bottom; }
+#t-robust td.wrap { min-width: 12rem; }
+td.pos { color: var(--long); } td.neg { color: var(--court); }
+td.wrap, th.wrap { white-space: normal; min-width: 14rem; }
+@media (max-width: 720px) { .meth { grid-template-columns: minmax(0,1fr); } }
+/* Reset de base (fourni par l'hébergeur d'artifacts, à refaire ici) */
+:root { color-scheme: light; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Crédit immobilier · étude · octobre 2026</div>
+      <h1>Court ou long&nbsp;?</h1>
+      <p class="lede">Faut-il emprunter sur la durée la plus courte possible ou la plus longue possible&nbsp;? La réponse tient en une comparaison&nbsp;: ce que coûte réellement chaque année d'emprunt en plus, face à ce que rapporte l'argent qu'elle libère.</p>
+      <p class="hero-sub">Cas de référence&nbsp;: 250&nbsp;000&nbsp;€ empruntés sur 15 ou 25&nbsp;ans, taux moyens d'octobre 2026<sup class="ref"><a href="#src-1">1</a></sup>, assurance à 0,30&nbsp;% sur capital initial, comme un contrat groupe bancaire<sup class="ref"><a href="#src-11">11</a></sup>.</p>
+    </div>
+    <div class="seuil">
+      <div class="eyebrow">Coût réel de l'allongement de 15 à 25 ans</div>
+      <div class="big num" data-k="bePure" data-f="pct1">4,7&nbsp;%</div>
+      <p>Les années ajoutées coûtent <span data-k="bePure" data-f="pct2"></span> par an, contre 3,75&nbsp;% affichés. Placé dans un PEA (frais et prélèvements sociaux compris), l'argent libéré doit rapporter plus de <strong data-k="bePea" data-f="pct1"></strong> brut par an pour que le prêt long gagne.</p>
+    </div>
+  </header>
+  <nav class="toc" aria-label="Sommaire">
+    <a href="#mecanique">Mécanique</a>
+    <a href="#facteurs">Les facteurs</a>
+    <a href="#cas">Cas d'étude</a>
+    <a href="#argument">L'argument du prêt long</a>
+    <a href="#simulateur">Simulateur</a>
+    <a href="#methodo">Méthodologie</a>
+    <a href="#conclusion">Conclusion</a>
+    <a href="#sources">Sources</a>
+  </nav>
+
+  <!-- 1. MÉCANIQUE -->
+  <section id="mecanique">
+    <div class="head prose">
+      <div class="eyebrow">1 · Mécanique</div>
+      <h2>Ce qui se passe quand on allonge un prêt</h2>
+      <p>Un prêt immobilier à taux fixe se rembourse par mensualités constantes. Chaque mois, on paie les intérêts du capital restant dû, puis on rembourse du capital avec le reste. En France, le taux mensuel est le taux annuel divisé par 12 (méthode proportionnelle)<sup class="ref"><a href="#src-4">4</a></sup>. Allonger la durée baisse la mensualité, mais le capital reste dû plus longtemps et produit des intérêts plus longtemps.</p>
+    </div>
+    <div class="formula">mensualité = C × t / (1 − (1 + t)<sup>−n</sup>) + prime d'assurance &nbsp;&nbsp;·&nbsp;&nbsp; t = taux annuel / 12, n = nombre de mois</div>
+    <div class="mech">
+      <div>
+        <h3>Les intérêts</h3>
+        <p>Ils sont calculés sur le capital restant dû. Sur un prêt long, ce capital baisse lentement au début, si bien que les premières années servent surtout à payer des intérêts.</p>
+      </div>
+      <div>
+        <h3>L'assurance</h3>
+        <p>Les contrats groupe des banques sont le plus souvent calculés sur le capital initial, les contrats en délégation sur le capital restant dû<sup class="ref"><a href="#src-11">11</a></sup>. Sur capital initial, la prime est la même jusqu'à la dernière mensualité, même quand il ne reste presque rien à rembourser.</p>
+      </div>
+      <div>
+        <h3>La grille de taux</h3>
+        <p>Les banques prêtent plus cher sur longue durée. En octobre 2026, on trouve en moyenne 3,50&nbsp;% sur 15&nbsp;ans, 3,66&nbsp;% sur 20&nbsp;ans et 3,75&nbsp;% sur 25&nbsp;ans<sup class="ref"><a href="#src-1">1</a></sup>. Le taux plus élevé s'applique à tout le capital, dès le premier mois.</p>
+      </div>
+    </div>
+    <div class="prose stack">
+      <p><strong>La bonne question.</strong> Un prêt long coûte toujours plus cher au total. Mais il laisse chaque mois de l'argent disponible, et la comparaison doit dire ce que devient cet argent. Passer de 15 à 25&nbsp;ans revient à recevoir <span data-k="delta" data-f="eur"></span> par mois pendant 15&nbsp;ans, puis à rembourser <span data-k="m25" data-f="eur"></span> par mois pendant 10&nbsp;ans de plus. Ce « prêt caché » a un taux implicite, le <em>coût réel de l'allongement</em>&nbsp;: <span data-k="bePure" data-f="pct2"></span> ici. C'est plus que les 3,75&nbsp;% affichés, pour deux raisons. Le taux sur 25&nbsp;ans s'applique à tout le capital, et l'assurance court dix ans de plus.</p>
+    </div>
+  </section>
+
+  <!-- 2. FACTEURS -->
+  <section id="facteurs">
+    <div class="head prose">
+      <div class="eyebrow">2 · Les facteurs</div>
+      <h2>Tout ce qui fait pencher la balance</h2>
+      <p>Chaque facteur porte une étiquette&nbsp;: il favorise la durée <span class="c-court">courte</span>, la durée <span class="c-long">longue</span>, dépend de votre situation, ou ne départage pas les deux options.</p>
+    </div>
+    <div class="factors">
+      <div class="factor"><span class="tag court">Favorise court</span><h3>Taux d'intérêt</h3><p>Plus le taux est élevé, plus chaque année supplémentaire coûte cher. L'écart entre durées compte aussi&nbsp;: +0,25&nbsp;point entre 15 et 25&nbsp;ans en octobre 2026<sup class="ref"><a href="#src-1">1</a></sup>, appliqué à la totalité du capital.</p></div>
+      <div class="factor"><span class="tag court">Favorise court</span><h3>Taux d'assurance</h3><p>En délégation, un non-fumeur paie environ 0,10&nbsp;% à 25&nbsp;ans, 0,13&nbsp;% à 35&nbsp;ans, 0,24&nbsp;% à 45&nbsp;ans et 0,47&nbsp;% à 55&nbsp;ans<sup class="ref"><a href="#src-10">10</a></sup>. Plus l'assurance est chère, plus chaque année ajoutée pèse. Depuis la loi Lemoine, on peut changer d'assurance à tout moment<sup class="ref"><a href="#src-9">9</a></sup>.</p></div>
+      <div class="factor"><span class="tag dep">Contrainte</span><h3>Montant et capacité d'emprunt</h3><p>Le HCSF limite les charges d'emprunt, assurance comprise, à 35&nbsp;% du revenu net avant impôt, et la durée d'amortissement à 25&nbsp;ans (27&nbsp;ans de durée totale avec un différé, pour le neuf ou l'ancien avec travaux)<sup class="ref"><a href="#src-5">5</a>,<a href="#src-6">6</a></sup>. Pour un montant donné, la durée courte peut être impossible.</p></div>
+      <div class="factor"><span class="tag dep">Dépend</span><h3>Rendement de l'argent libéré</h3><p>C'est le cœur du débat. Si l'argent libéré rapporte, net de frais et d'impôts, plus que le coût réel de l'allongement, le prêt long gagne. Livret A à 1,7&nbsp;%<sup class="ref"><a href="#src-12">12</a></sup>, fonds euros à 2,63&nbsp;% en 2025<sup class="ref"><a href="#src-13">13</a></sup>&nbsp;: le prêt long perd. En actions, il peut gagner, au prix du risque.</p></div>
+      <div class="factor"><span class="tag dep">Dépend</span><h3>Fiscalité des placements</h3><p>Depuis 2026, les prélèvements sociaux sont de 18,6&nbsp;% et la flat tax de 31,4&nbsp;%. L'assurance-vie reste à 17,2&nbsp;%<sup class="ref"><a href="#src-14">14</a></sup>. Dans un PEA de plus de 5&nbsp;ans, les gains ne supportent que les 18,6&nbsp;%<sup class="ref"><a href="#src-15">15</a></sup>. Le Livret A est exonéré.</p></div>
+      <div class="factor"><span class="tag long">Favorise long, un peu</span><h3>Inflation</h3><p>Les mensualités sont fixes en euros courants, et l'inflation les allège. Elle était de 3,0&nbsp;% sur un an en septembre 2026<sup class="ref"><a href="#src-25">25</a></sup>, et la Banque de France l'attend (indice harmonisé) à 1,9&nbsp;% en 2027 puis 1,6&nbsp;% en 2028<sup class="ref"><a href="#src-26">26</a></sup>. Elle gonfle aussi les rendements nominaux, donc elle ne change pas le gagnant. Elle rend surtout les dernières années plus légères.</p></div>
+      <div class="factor"><span class="tag neutre">Effet indirect</span><h3>Croissance de l'économie</h3><p>Le PIB français a progressé de 1,5&nbsp;% en 2024 et de 0,8&nbsp;% en 2025<sup class="ref"><a href="#src-27">27</a></sup>, avec 0,4&nbsp;% attendus en 2026<sup class="ref"><a href="#src-26">26</a></sup>. La croissance ne touche pas votre prêt directement. Elle joue sur les salaires (donc le taux d'effort futur), sur les taux (donc la renégociation) et sur les prix immobiliers, qui sont les mêmes quelle que soit la durée.</p></div>
+      <div class="factor"><span class="tag dep">Dépend</span><h3>Apport</h3><p>Plus d'apport, c'est moins de capital emprunté. Mais un euro d'apport ne rapporte rien ailleurs&nbsp;: c'est le même arbitrage que la durée, avec le même seuil de rentabilité.</p></div>
+      <div class="factor"><span class="tag court">Favorise court</span><h3>Revente anticipée</h3><p>Les logements anciens revendus en 2021 avaient été détenus 12,2&nbsp;ans en moyenne (11,3&nbsp;ans pour les appartements)<sup class="ref"><a href="#src-24">24</a></sup>. En début de prêt long, le capital restant dû est élevé. Les indemnités de remboursement anticipé sont plafonnées à 6&nbsp;mois d'intérêts et à 3&nbsp;% du capital restant dû<sup class="ref"><a href="#src-7">7</a></sup>. Elles ne sont pas dues si la vente suit une mutation professionnelle, un décès ou une perte d'emploi subie<sup class="ref"><a href="#src-8">8</a></sup>.</p></div>
+      <div class="factor"><span class="tag long">Favorise long</span><h3>Renégociation et rachat</h3><p>Si les taux baissent, un prêt long laisse plus d'intérêts à économiser en renégociant. S'ils montent, il garde un taux bas plus longtemps. Cette option n'est pas chiffrée ici&nbsp;: elle joue en faveur du long.</p></div>
+      <div class="factor"><span class="tag long">Favorise long</span><h3>Souplesse</h3><p>Une mensualité basse laisse de la marge en cas de coup dur. Les clauses de modulation permettent le plus souvent de baisser ou de hausser l'échéance de 10 à 30&nbsp;%<sup class="ref"><a href="#src-23">23</a></sup>. Avec des remboursements anticipés sans pénalité, on peut raccourcir un prêt long. Rallonger un prêt court est plus difficile.</p></div>
+      <div class="factor"><span class="tag court">Favorise court</span><h3>Discipline d'épargne</h3><p>Le prêt long ne s'enrichit que si la différence est placée chaque mois, sur toute la durée, sans y toucher. Si elle part en consommation, on a consommé plus tôt, mais moins au total (section&nbsp;4).</p></div>
+      <div class="factor"><span class="tag court">Favorise court</span><h3>Âge et retraite</h3><p>Finir avant la retraite évite de rembourser avec des revenus en baisse. L'assurance devient chère avec l'âge<sup class="ref"><a href="#src-10">10</a></sup>, et la loi Lemoine ne dispense du questionnaire de santé que si le prêt se termine avant 60&nbsp;ans (et pour 200&nbsp;000&nbsp;€ assurés au plus)<sup class="ref"><a href="#src-9">9</a></sup>.</p></div>
+      <div class="factor"><span class="tag long">Favorise long</span><h3>Investissement locatif</h3><p>En location nue au régime réel, les intérêts et l'assurance emprunteur se déduisent des revenus fonciers<sup class="ref"><a href="#src-17">17</a></sup>. En micro-foncier, ils sont réputés couverts par l'abattement de 30&nbsp;%<sup class="ref"><a href="#src-18">18</a></sup>. En LMNP au réel, les intérêts sont déductibles. Pour une résidence principale, rien n'est déductible.</p></div>
+      <div class="factor"><span class="tag neutre">Imposé</span><h3>Prêts aidés</h3><p>La durée du PTZ (10 à 25&nbsp;ans, avec ou sans différé) est fixée par la tranche de revenus<sup class="ref"><a href="#src-19">19</a></sup>. Le prêt Action Logement, à 1&nbsp;%, peut durer jusqu'à 25&nbsp;ans<sup class="ref"><a href="#src-20">20</a></sup>. À ces taux, il n'y a aucun intérêt à les rembourser avant le prêt principal.</p></div>
+      <div class="factor"><span class="tag neutre">Neutre</span><h3>Frais fixes</h3><p>Le coût de la caution Crédit Logement dépend de la destination, de la nature et du montant de l'opération&nbsp;; la durée ne fait pas partie des critères<sup class="ref"><a href="#src-22">22</a></sup>. Les frais de notaire non plus<sup class="ref"><a href="#src-21">21</a></sup>. Ils ne départagent pas les options.</p></div>
+    </div>
+  </section>
+
+  <!-- 3. CAS D'ÉTUDE -->
+  <section id="cas">
+    <div class="head prose">
+      <div class="eyebrow">3 · Cas d'étude</div>
+      <h2>Un ménage, un appartement, trois durées</h2>
+      <p>250&nbsp;000&nbsp;€ empruntés, revenus nets avant impôt de 5&nbsp;500&nbsp;€ par mois, assurance à 0,30&nbsp;% sur capital initial, hypothèse de contrat groupe bancaire (les variantes sont testées en section&nbsp;6). Taux moyens Pretto d'octobre 2026&nbsp;: 3,50&nbsp;% sur 15&nbsp;ans, 3,66&nbsp;% sur 20&nbsp;ans, 3,75&nbsp;% sur 25&nbsp;ans<sup class="ref"><a href="#src-1">1</a></sup>. Survolez les graphiques pour lire les valeurs.</p>
+    </div>
+    <div class="figs">
+      <figure>
+        <div><h3>Coût total du crédit</h3><div class="sub">Intérêts et assurance, en euros, selon la durée</div></div>
+        <div class="legend"><span><span class="sw" style="background:var(--court)"></span>Intérêts</span><span><span class="sw" style="background:var(--seq-1)"></span>Assurance</span></div>
+        <div class="chart"><canvas id="c-cout" aria-label="Coût total du crédit selon la durée" role="img"></canvas></div>
+        <figcaption>Le coût total passe de <span data-k="cost15" data-f="eur"></span> sur 15&nbsp;ans à <span data-k="cost25" data-f="eur"></span> sur 25&nbsp;ans. La mensualité, elle, passe de <span data-k="m15" data-f="eur"></span> à <span data-k="m25" data-f="eur"></span>. C'est l'argument du camp « le plus court possible ».</figcaption>
+      </figure>
+      <figure>
+        <div><h3>Capacité d'emprunt à 35&nbsp;% d'effort</h3><div class="sub">Montant maximal pour une mensualité de <span data-k="mmax" data-f="eur"></span>, assurance comprise</div></div>
+        <div class="legend"><span><span class="sw" style="background:var(--seq-2)"></span>Capacité</span><span><span class="ln" style="background:var(--ink-2)"></span>Besoin&nbsp;: 250&nbsp;000&nbsp;€</span></div>
+        <div class="chart"><canvas id="c-capa" aria-label="Capacité d'emprunt selon la durée" role="img"></canvas></div>
+        <figcaption>Sur 15&nbsp;ans, ce ménage peut emprunter jusqu'à <span data-k="cap15" data-f="eur"></span>, et le projet passe avec <span data-k="eff15" data-f="pct1"></span> d'effort. Sur 25&nbsp;ans, il pourrait emprunter <span data-k="cap25" data-f="eur"></span>. Souvent, la durée sert d'abord à acheter plus grand, et ce n'est plus le même projet.</figcaption>
+      </figure>
+      <figure>
+        <div><h3>Capital restant dû</h3><div class="sub">En euros, en fin d'année</div></div>
+        <div class="legend"><span><span class="ln" style="background:var(--court)"></span>15 ans</span><span><span class="ln" style="background:var(--long)"></span>25 ans</span></div>
+        <div class="chart"><canvas id="c-crd" aria-label="Capital restant dû sur 15 et 25 ans" role="img"></canvas></div>
+        <figcaption>Au bout de 12&nbsp;ans, la durée moyenne de détention<sup class="ref"><a href="#src-24">24</a></sup>, il reste <span data-k="crd12_15" data-f="eur"></span> à rembourser sur le prêt de 15&nbsp;ans et <span data-k="crd12_25" data-f="eur"></span> sur celui de 25&nbsp;ans.</figcaption>
+      </figure>
+      <figure>
+        <div><h3>Placer la différence&nbsp;: qui gagne après 25&nbsp;ans&nbsp;?</h3><div class="sub">Avance de la stratégie 25&nbsp;ans sur la stratégie 15&nbsp;ans, selon le rendement brut annuel</div></div>
+        <div class="legend"><span><span class="ln" style="background:var(--ink)"></span>Sans frais ni impôt</span><span><span class="ln" style="background:var(--mid)"></span>Dans un PEA (frais 0,38&nbsp;%, prélèvements 18,6&nbsp;%)</span></div>
+        <div class="chart"><canvas id="c-be" aria-label="Écart de patrimoine à 25 ans selon le rendement" role="img"></canvas></div>
+        <figcaption>Même budget mensuel pour les deux ménages (<span data-k="budget" data-f="eur"></span>). Le ménage à 25&nbsp;ans place <span data-k="delta" data-f="eur"></span> par mois dès le départ. Le ménage à 15&nbsp;ans place <span data-k="budget" data-f="eur"></span> par mois une fois son prêt soldé. Sur un Livret A à 1,7&nbsp;%, le prêt court gagne de <span data-k="dLivretAbs" data-f="eur"></span>. Le long passe devant au-delà de <span data-k="bePure" data-f="pct1"></span> net, soit <span data-k="bePea" data-f="pct1"></span> brut dans un PEA.</figcaption>
+      </figure>
+      <figure>
+        <div><h3>Et si on revend avant&nbsp;?</h3><div class="sub">Avance du 25&nbsp;ans sur le 15&nbsp;ans en cas de revente l'année N, indemnités de remboursement comprises</div></div>
+        <div class="legend"><span><span class="ln" style="background:var(--seq-1)"></span>Livret A 1,7&nbsp;%</span><span><span class="ln" style="background:var(--seq-2)"></span>PEA à 6,67&nbsp;%</span><span><span class="ln" style="background:var(--seq-3)"></span>PEA à 8&nbsp;%</span></div>
+        <div class="chart"><canvas id="c-revente" aria-label="Écart selon l'année de revente" role="img"></canvas></div>
+        <figcaption>Rendements sans aléa ici&nbsp;: 6,67&nbsp;% est la performance annuelle du MSCI World en euros depuis fin 2000<sup class="ref"><a href="#src-28">28</a></sup>. À 8&nbsp;% par an, le long ne passe devant qu'à partir de <span data-k="cross8" data-f="int"></span>&nbsp;ans. Sur livret, il ne passe jamais devant.</figcaption>
+      </figure>
+      <figure>
+        <div><h3>Taux d'effort dans le temps</h3><div class="sub">Mensualité rapportée aux revenus, avec des revenus en hausse de 2&nbsp;% par an</div></div>
+        <div class="legend"><span><span class="ln" style="background:var(--court)"></span>15 ans</span><span><span class="ln" style="background:var(--mid)"></span>20 ans</span><span><span class="ln" style="background:var(--long)"></span>25 ans</span><span><span class="ln" style="background:var(--ink-2)"></span>Plafond HCSF 35&nbsp;%</span></div>
+        <div class="chart"><canvas id="c-effort" aria-label="Taux d'effort dans le temps" role="img"></canvas></div>
+        <figcaption>Une hausse de 2&nbsp;% par an correspond aux salaires prévus par la Banque de France pour 2026<sup class="ref"><a href="#src-26">26</a></sup>. Avec elle, un effort de <span data-k="eff15" data-f="pct1"></span> la première année tombe à <span data-k="eff15y11" data-f="pct1"></span> la onzième. Un prêt court est surtout dur au début, quand l'avenir est le plus incertain.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 4. L'ARGUMENT DU PRÊT LONG -->
+  <section id="argument">
+    <div class="head prose">
+      <div class="eyebrow">4 · L'argument du prêt long</div>
+      <h2>« Avec un prêt long, t'as plus de sous à toi, et tu peux les placer&nbsp;»</h2>
+      <p>L'argument contient deux promesses&nbsp;: un meilleur niveau de vie, et un placement qui rapporte, ici 8&nbsp;% par an. On les teste séparément, parce qu'un même euro ne peut pas être à la fois dépensé et placé.</p>
+    </div>
+
+    <div class="prose stack">
+      <h3>8&nbsp;% par an, c'est réaliste&nbsp;?</h3>
+      <p>C'est cohérent avec l'historique des actions, mais pas garanti. Le MSCI World a rapporté 9,02&nbsp;% par an depuis fin 1987 (en dollars, dividendes réinvestis)<sup class="ref"><a href="#src-29">29</a></sup>, mais 6,67&nbsp;% par an en euros depuis fin 2000<sup class="ref"><a href="#src-28">28</a></sup>. Sur 1900-2025, les actions des pays développés ont rapporté 8,5&nbsp;% par an en dollars<sup class="ref"><a href="#src-30">30</a></sup>. Avec une volatilité annuelle de 13 à 15&nbsp;%<sup class="ref"><a href="#src-28">28</a>,<a href="#src-29">29</a></sup>, il a fallu, dans le pire cas, au moins 13&nbsp;ans pour qu'un placement en actions mondiales redevienne positif<sup class="ref"><a href="#src-32">32</a></sup>, et l'indice japonais a mis 34&nbsp;ans à retrouver son record de 1989<sup class="ref"><a href="#src-33">33</a></sup>. On retient donc 8&nbsp;% comme hypothèse centrale, avec une volatilité de 15&nbsp;% et des frais de 0,38&nbsp;% par an, ceux d'un ETF MSCI World éligible au PEA<sup class="ref"><a href="#src-34">34</a></sup>.</p>
+    </div>
+
+    <div class="figs">
+      <figure>
+        <div><h3>Promesse 1&nbsp;: le niveau de vie</h3><div class="sub">Argent disponible chaque mois après la mensualité, à budget logement égal (<span data-k="budget" data-f="eur"></span>)</div></div>
+        <div class="legend"><span><span class="ln" style="background:var(--court)"></span>Prêt 15 ans</span><span><span class="ln" style="background:var(--long)"></span>Prêt 25 ans</span></div>
+        <div class="chart"><canvas id="a-dispo" aria-label="Argent disponible chaque mois" role="img"></canvas></div>
+        <figcaption>Le prêt long donne <span data-k="delta" data-f="eur"></span> de plus par mois pendant 15&nbsp;ans. Ensuite, le prêt court donne <span data-k="budget" data-f="eur"></span> par mois, contre <span data-k="delta" data-f="eur"></span>. Sur 25&nbsp;ans, le prêt court laisse <span data-k="freeA" data-f="eur"></span> à dépenser et le long <span data-k="freeB" data-f="eur"></span>. En euros d'aujourd'hui (inflation de 2&nbsp;%), c'est <span data-k="freeAr" data-f="eur"></span> contre <span data-k="freeBr" data-f="eur"></span>. Le niveau de vie est meilleur plus tôt, mais moins élevé au total. On emprunte à son futur soi au taux de <span data-k="bePure" data-f="pct1"></span>.</figcaption>
+      </figure>
+      <figure>
+        <div><h3>Promesse 2&nbsp;: placer à 8&nbsp;%</h3><div class="sub">Patrimoine financier net de chaque ménage (placements nets d'impôt latent, moins capital restant dû), dans un PEA, à 8&nbsp;% par an sans aléa</div></div>
+        <div class="legend"><span><span class="ln" style="background:var(--court)"></span>Prêt 15 ans</span><span><span class="ln" style="background:var(--long)"></span>Prêt 25 ans</span></div>
+        <div class="chart"><canvas id="a-patri" aria-label="Patrimoine net des deux ménages à 8 %" role="img"></canvas></div>
+        <figcaption>Avec 8&nbsp;% garantis, ton pote a raison&nbsp;: après 25&nbsp;ans, le ménage à 25&nbsp;ans a <span data-k="d8" data-f="eur"></span> de plus, après frais et prélèvements sociaux. Le ménage à 15&nbsp;ans place plus, mais plus tard, et ses versements ont dix ans de moins pour fructifier.</figcaption>
+      </figure>
+      <figure>
+        <div><h3>Mais 8&nbsp;% n'est qu'une moyenne</h3><div class="sub">Avance du 25&nbsp;ans après 25&nbsp;ans, sur 4&nbsp;000 marchés simulés (8&nbsp;% par an en médiane, volatilité 15&nbsp;%)</div></div>
+        <div class="legend"><span><span class="sw" style="background:var(--long)"></span>Le long gagne</span><span><span class="sw" style="background:var(--court)"></span>Le court gagne</span></div>
+        <div class="chart"><canvas id="a-hist" aria-label="Distribution des écarts simulés" role="img"></canvas></div>
+        <figcaption>Le prêt long gagne dans <span data-k="pwin25" data-f="pct0"></span> des cas. Dans 1 cas sur 10, il perd plus de <span data-k="p10abs" data-f="eur1000"></span>. Dans 1 cas sur 10, il gagne plus de <span data-k="p90" data-f="eur1000"></span>. La médiane est de <span data-k="p50" data-f="eur1000"></span>. Les deux ménages subissent exactement les mêmes marchés.</figcaption>
+      </figure>
+      <figure>
+        <div><h3>Et à condition de ne pas revendre</h3><div class="sub">Probabilité que le prêt long soit devant si l'on revend l'année N (mêmes 4&nbsp;000 marchés)</div></div>
+        <div class="legend"><span><span class="ln" style="background:var(--long)"></span>8&nbsp;% médian</span><span><span class="ln" style="background:var(--seq-2)"></span>6,67&nbsp;% médian</span></div>
+        <div class="chart"><canvas id="a-proba" aria-label="Probabilité de gain selon l'année de revente" role="img"></canvas></div>
+        <figcaption>Si l'on revend au bout de 8&nbsp;ans, c'est presque pile ou face (<span data-k="pwin8" data-f="pct0"></span>). Avec le rendement du MSCI World en euros depuis 2000, le long ne gagne que dans <span data-k="pwin25_667" data-f="pct0"></span> des cas après 25&nbsp;ans.</figcaption>
+      </figure>
+    </div>
+
+    <div class="prose stack">
+      <h3>Verdict sur l'argument</h3>
+      <p><strong>Il est juste sur le principe et sur l'espérance.</strong> Si l'on place vraiment la différence en actions, sur toute la durée, l'histoire donne plus souvent raison au prêt long. Trois limites l'empêchent d'être une règle générale&nbsp;:</p>
+      <ol class="rules">
+        <li><strong>On ne peut pas avoir les deux promesses.</strong> Chaque euro dépensé pour le niveau de vie n'est pas placé. Dépensée, la différence coûte <span data-k="bePure" data-f="pct1"></span> par an.</li>
+        <li><strong>Le gain est un pari.</strong> C'est un emprunt à environ <span data-k="bePure" data-f="pct1"></span> pour acheter des actions. Il est perdant dans <span data-k="plose25" data-f="pct0"></span> des marchés simulés, et c'est quasiment pile ou face sur 8&nbsp;ans.</li>
+        <li><strong>Il faut tenir 25&nbsp;ans sans toucher au placement</strong>, y compris pendant les krachs, puisque les pertes maximales du MSCI World ont dépassé 50&nbsp;%<sup class="ref"><a href="#src-28">28</a>,<a href="#src-29">29</a></sup>.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 5. SIMULATEUR -->
+  <section id="simulateur">
+    <div class="head prose">
+      <div class="eyebrow">5 · Simulateur</div>
+      <h2>Votre cas, curseur par curseur</h2>
+      <p>Les deux prêts sont comparés à budget mensuel égal. Le ménage qui paie la mensualité la plus basse place la différence. L'autre place tout son budget une fois son prêt soldé. On compare les patrimoines financiers nets à la date choisie. Le bien est le même dans les deux cas. La méthode est détaillée en section&nbsp;6.</p>
+    </div>
+    <div class="sim">
+      <form class="controls" id="form" autocomplete="off">
+        <div class="group">
+          <div class="eyebrow">Projet</div>
+          <div class="ctl"><div class="row"><label for="prix">Prix du bien</label><output id="o-prix"></output></div><input type="range" id="prix" min="80000" max="900000" step="5000" value="280000"></div>
+          <div class="ctl"><div class="row"><label for="notaire">Frais de notaire</label>
+            <select id="notaire"><option value="0.075" selected>Ancien (~7,5 %)</option><option value="0.025">Neuf (~2,5 %)</option></select></div></div>
+          <div class="ctl"><div class="row"><label for="apport">Apport</label><output id="o-apport"></output></div><input type="range" id="apport" min="0" max="400000" step="1000" value="51000"></div>
+          <div class="derived" id="o-capital"></div>
+          <div class="ctl"><div class="row"><label for="revenu">Revenus nets avant impôt</label><output id="o-revenu"></output></div><input type="range" id="revenu" min="1500" max="15000" step="100" value="5500"><span class="hint">Du foyer, par mois (base du calcul HCSF)</span></div>
+        </div>
+        <div class="group">
+          <div class="eyebrow">Les deux prêts</div>
+          <div class="ctl"><div class="row"><label for="dA"><span class="dot court"></span>Durée du prêt court</label><output id="o-dA"></output></div><input type="range" class="court" id="dA" min="5" max="29" step="1" value="15"></div>
+          <div class="ctl"><div class="row"><label for="tA">Taux du prêt court</label><output id="o-tA"></output></div><input type="range" class="court" id="tA" min="0.5" max="7" step="0.01" value="3.5"></div>
+          <div class="ctl"><div class="row"><label for="dB"><span class="dot long"></span>Durée du prêt long</label><output id="o-dB"></output></div><input type="range" class="long" id="dB" min="6" max="30" step="1" value="25"></div>
+          <div class="ctl"><div class="row"><label for="tB">Taux du prêt long</label><output id="o-tB"></output></div><input type="range" class="long" id="tB" min="0.5" max="7" step="0.01" value="3.75"><span class="hint">Quand la durée change, le taux se cale sur la grille Pretto d'octobre 2026 (15, 20, 25 ans), prolongée en ligne droite au-delà. Ajustez-le à votre offre.</span></div>
+          <div class="ctl"><div class="row"><label for="ass">Assurance</label><output id="o-ass"></output></div><input type="range" id="ass" min="0" max="0.8" step="0.01" value="0.30"><span class="hint">Taux annuel pour 100&nbsp;% du capital assuré</span></div>
+          <div class="ctl"><div class="row"><label for="insMode">Assiette de l'assurance</label>
+            <select id="insMode"><option value="initial" selected>Capital initial</option><option value="crd">Capital restant dû</option></select></div></div>
+          <label class="check" for="ira"><input type="checkbox" id="ira" checked> Indemnités de remboursement anticipé en cas de revente</label>
+        </div>
+        <div class="group">
+          <div class="eyebrow">Placements</div>
+          <div class="chips" id="presets" role="group" aria-label="Placements types">
+            <button type="button" data-p="livret">Livret A</button>
+            <button type="button" data-p="euros">Fonds euros</button>
+            <button type="button" data-p="msci">MSCI World depuis 2000</button>
+            <button type="button" data-p="pote">Actions à 8 %</button>
+          </div>
+          <div class="ctl"><div class="row"><label for="rend">Rendement brut annuel</label><output id="o-rend"></output></div><input type="range" id="rend" min="-1" max="12" step="0.01" value="8"><span class="hint">Médiane sur la période, avant frais et impôts</span></div>
+          <div class="ctl"><div class="row"><label for="fees">Frais annuels</label><output id="o-fees"></output></div><input type="range" id="fees" min="0" max="2" step="0.01" value="0.38"></div>
+          <div class="ctl"><label for="env">Fiscalité des gains</label>
+            <select id="env" class="full">
+              <option value="0">Aucune (Livret A)</option>
+              <option value="0.186" selected>PEA plus de 5 ans (18,6 %)</option>
+              <option value="0.172">Assurance-vie, prélèvements sociaux (17,2 %)</option>
+              <option value="0.314">Compte-titres, flat tax (31,4 %)</option>
+            </select></div>
+          <div class="ctl"><div class="row"><label for="vol">Volatilité annuelle</label><output id="o-vol"></output></div><input type="range" id="vol" min="0" max="30" step="0.5" value="15"><span class="hint">0 pour un placement sans risque. Actions mondiales&nbsp;: 13 à 15&nbsp;%</span></div>
+        </div>
+        <div class="group">
+          <div class="eyebrow">Économie et vie</div>
+          <div class="ctl"><div class="row"><label for="infl">Inflation moyenne</label><output id="o-infl"></output></div><input type="range" id="infl" min="0" max="6" step="0.1" value="2"><span class="hint">Sert à exprimer les résultats en euros d'aujourd'hui</span></div>
+          <div class="ctl"><div class="row"><label for="crois">Hausse annuelle des revenus</label><output id="o-crois"></output></div><input type="range" id="crois" min="0" max="5" step="0.1" value="2"></div>
+          <div class="ctl"><div class="row"><label for="rev">Revente du bien</label><output id="o-rev"></output></div><input type="range" id="rev" min="1" max="25" step="1" value="25"><span class="hint">Tout à droite&nbsp;: pas de revente avant la fin du prêt long</span></div>
+        </div>
+      </form>
+
+      <div class="results">
+        <div class="verdict" aria-live="polite">
+          <div class="stack" style="gap:.4rem">
+            <div class="lab" id="v-lab"></div>
+            <div class="val" id="v-val"></div>
+            <p id="v-txt"></p>
+          </div>
+          <div class="be">
+            <div class="lab">Rendement brut minimal</div>
+            <div class="val num" id="v-be"></div>
+            <p class="note" style="max-width:15rem">Au-dessus, le prêt long gagne. Coût réel de l'allongement&nbsp;: <span id="v-pure" class="num"></span>.</p>
+          </div>
+          <div class="mc" id="v-mc"></div>
+        </div>
+        <div class="kpis">
+          <div class="kpi" id="k-A"></div>
+          <div class="kpi" id="k-B"></div>
+        </div>
+        <figure>
+          <div><h3>Qui mène, année après année</h3><div class="sub">Avance du prêt long sur le prêt court si l'on revend en fin d'année N (patrimoine financier net, euros courants)</div></div>
+          <div class="legend"><span><span class="ln" style="background:var(--ink)"></span>Médiane</span><span id="lg-band"><span class="sw" style="background:var(--accent-wash);border:1px solid var(--axis)"></span>8 marchés sur 10</span></div>
+          <div class="chart tall"><canvas id="s-diff" aria-label="Écart de patrimoine dans le temps" role="img"></canvas></div>
+        </figure>
+        <div class="figs">
+          <figure>
+            <div><h3>Argent disponible chaque mois</h3><div class="sub">Budget commun moins la mensualité</div></div>
+            <div class="legend"><span><span class="ln" style="background:var(--court)"></span>Court</span><span><span class="ln" style="background:var(--long)"></span>Long</span></div>
+            <div class="chart"><canvas id="s-dispo" aria-label="Argent disponible chaque mois" role="img"></canvas></div>
+          </figure>
+          <figure>
+            <div><h3>Taux d'effort</h3><div class="sub">Mensualité rapportée aux revenus de l'année</div></div>
+            <div class="legend"><span><span class="ln" style="background:var(--court)"></span>Court</span><span><span class="ln" style="background:var(--long)"></span>Long</span><span><span class="ln" style="background:var(--ink-2)"></span>35&nbsp;%</span></div>
+            <div class="chart"><canvas id="s-effort" aria-label="Taux d'effort dans le temps" role="img"></canvas></div>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. MÉTHODOLOGIE -->
+  <section id="methodo">
+    <div class="head prose">
+      <div class="eyebrow">6 · Méthodologie</div>
+      <h2>Comment les chiffres sont calculés</h2>
+      <p>Tous les nombres de cette page sortent d'un même moteur de calcul, exécuté dans votre navigateur. Les textes et les graphiques ne peuvent donc pas se contredire. Voici chaque choix de méthode, sa justification, et ce qui changerait si on en faisait un autre.</p>
+    </div>
+    <div class="meth">
+      <div>
+        <h3>Le prêt</h3>
+        <ul>
+          <li>Taux fixe, mensualités constantes, taux mensuel proportionnel (taux annuel / 12), la pratique française<sup class="ref"><a href="#src-4">4</a></sup>.</li>
+          <li>Assurance au taux annuel indiqué, pour 100&nbsp;% du capital, sur capital initial (prime fixe) ou sur capital restant dû (prime dégressive).</li>
+          <li>Indemnités de remboursement anticipé au plafond légal&nbsp;: le plus petit de 6&nbsp;mois d'intérêts et de 3&nbsp;% du capital restant dû<sup class="ref"><a href="#src-7">7</a></sup>. On peut les désactiver dans le simulateur (cas d'exonération légale<sup class="ref"><a href="#src-8">8</a></sup> ou clause négociée).</li>
+        </ul>
+      </div>
+      <div>
+        <h3>La comparaison à budget égal</h3>
+        <ul>
+          <li>Les deux ménages consacrent chaque mois le même budget au logement&nbsp;: la plus élevée des deux mensualités. La part non absorbée par la mensualité est placée, à la fin de chaque mois.</li>
+          <li>On compare à une même date les patrimoines financiers nets&nbsp;: placements, moins l'impôt qui serait dû en les vendant, moins le capital restant dû, moins les indemnités en cas de revente. Le logement, sa valeur, la taxe foncière et les frais d'achat sont identiques des deux côtés et s'annulent.</li>
+          <li>Cette comparaison revient à calculer le taux de rendement interne de l'écart de flux entre les deux prêts. C'est le « coût réel de l'allongement ».</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Dépenser ou placer ne change pas le gagnant</h3>
+        <p>Si les deux ménages placent la même part de leur argent disponible (100&nbsp;%, 50&nbsp;% ou 10&nbsp;%), l'écart final est multiplié par cette part, mais son signe ne change pas. Ce qui compte, c'est le rendement comparé au coût de l'allongement. Ce qui est dépensé ne s'évalue pas en patrimoine. Le graphique « niveau de vie » montre ce flux à part.</p>
+      </div>
+      <div>
+        <h3>Les placements</h3>
+        <ul>
+          <li>Rendement brut, diminué des frais annuels, capitalisé chaque mois.</li>
+          <li>L'impôt est prélevé sur la plus-value latente à la date de comparaison, au taux de l'enveloppe&nbsp;: 18,6&nbsp;% pour un PEA de plus de 5&nbsp;ans<sup class="ref"><a href="#src-15">15</a></sup>, 17,2&nbsp;% en assurance-vie et 31,4&nbsp;% en compte-titres<sup class="ref"><a href="#src-14">14</a></sup>, 0&nbsp;% sur Livret A. Les deux ménages sont imposés de la même façon.</li>
+          <li>Plafond du PEA&nbsp;: 150&nbsp;000&nbsp;€ de versements par personne, donc 300&nbsp;000&nbsp;€ pour un couple<sup class="ref"><a href="#src-16">16</a></sup>. Dans le cas de référence, les versements atteignent au plus <span data-k="versA" data-f="eur"></span>, ce qui demande les deux PEA d'un couple.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Le risque</h3>
+        <ul>
+          <li>Simulation de Monte-Carlo&nbsp;: rendements mensuels log-normaux, avec un rendement annualisé médian égal au rendement saisi et la volatilité choisie. Les deux ménages traversent les mêmes marchés.</li>
+          <li>Générateur aléatoire à graine fixe&nbsp;: les mêmes réglages donnent toujours les mêmes résultats.</li>
+          <li>Limite&nbsp;: la loi log-normale sous-estime les krachs extrêmes, qui pénalisent surtout le ménage le plus investi au mauvais moment.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Ce qui n'est pas modélisé</h3>
+        <ul>
+          <li>La renégociation et le rachat de crédit, une option qui favorise le prêt long.</li>
+          <li>Le risque de perte d'emploi ou de baisse de revenus, qui favorise la mensualité basse.</li>
+          <li>Les variations de taux d'un prêt à l'autre selon le profil&nbsp;: réglez-les dans le simulateur.</li>
+          <li>Les anciens PEA ouverts avant 2018, dont une partie des gains garde les taux sociaux historiques.</li>
+          <li>Un retrait du PEA avant 5&nbsp;ans, taxé à 31,4&nbsp;% et qui clôture le plan<sup class="ref"><a href="#src-15">15</a></sup>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="prose stack" style="margin-top:.5rem">
+      <h3>Test de robustesse</h3>
+      <p>Le cas de référence (250&nbsp;000&nbsp;€, 15 contre 25&nbsp;ans, PEA à 8&nbsp;% avec 15&nbsp;% de volatilité) est recalculé en changeant une hypothèse à la fois. Si un lecteur conteste un choix, sa variante est probablement dans ce tableau.</p>
+    </div>
+    <div class="tablewrap">
+      <table id="t-robust">
+        <thead><tr><th class="wrap">Variante</th><th>Coût de l'allongement</th><th>Seuil brut en PEA</th><th>Écart, 8 % sans aléa</th><th>Long gagnant (simul.)</th></tr></thead>
+        <tbody><tr><td colspan="5" class="note">Calcul en cours…</td></tr></tbody>
+      </table>
+    </div>
+    <p class="note prose">Écart et probabilité après 25&nbsp;ans, sauf pour la ligne « revente », évaluée à 12&nbsp;ans. Écart positif si le prêt long finit devant, en euros courants. Les taux Crédit Logement (août 2026) viennent des prêts effectivement accordés<sup class="ref"><a href="#src-2">2</a></sup>. Ceux de CAFPI sont des taux négociés par un courtier au 1<sup>er</sup> octobre<sup class="ref"><a href="#src-3">3</a></sup>.</p>
+  </section>
+
+  <!-- 7. CONCLUSION -->
+  <section id="conclusion">
+    <div class="head prose">
+      <div class="eyebrow">7 · Conclusion</div>
+      <h2>Le court par défaut, le long pour qui investit vraiment</h2>
+      <p>Les deux camps ont un argument juste. Le camp « court » a raison sur le coût&nbsp;: allonger revient à emprunter environ <span data-k="bePure" data-f="pct1"></span> à son futur soi. Le camp « long » a raison sur l'espérance&nbsp;: des actions à 8&nbsp;% rapportent plus que ce coût, la plupart du temps. Le désaccord porte donc sur une seule question&nbsp;: que devient l'argent libéré&nbsp;?</p>
+    </div>
+    <div class="concl">
+      <div class="court">
+        <h3>Le court gagne si…</h3>
+        <p>…l'argent libéré irait sur un livret, un fonds euros, ou serait dépensé. Il gagne aussi si vous risquez de revendre dans les 10&nbsp;ans, si votre assurance est chère, ou si le prêt long déborde sur la retraite.</p>
+      </div>
+      <div class="long">
+        <h3>Le long gagne si…</h3>
+        <p>…vous placez réellement chaque mois la différence en actions (PEA), pendant toute la durée du prêt, sans vendre pendant les krachs. Avec 8&nbsp;% par an, il gagne dans <span data-k="pwin25" data-f="pct0"></span> des marchés simulés. Il gagne aussi en investissement locatif, où les intérêts se déduisent, ou quand c'est la seule durée qui rend l'achat possible.</p>
+      </div>
+      <div class="mix">
+        <h3>Le compromis</h3>
+        <p>Prendre une durée intermédiaire, négocier une clause de modulation et des remboursements anticipés sans pénalité, et raccourcir quand les revenus montent. On garde la souplesse du long et on décide plus tard, avec plus d'informations.</p>
+      </div>
+    </div>
+    <div class="prose stack">
+      <h3>En pratique</h3>
+      <ol class="rules">
+        <li>Fixez le montant, et gardez une épargne de précaution intacte.</li>
+        <li>Prenez la durée la plus courte qui garde un taux d'effort confortable, plutôt 30 à 33&nbsp;% que 35&nbsp;%.</li>
+        <li>N'allongez pour « placer la différence » que si vous investissez déjà en actions, avec un horizon d'au moins 15&nbsp;ans, et un virement programmé le jour de la mensualité.</li>
+        <li>Faites jouer la concurrence sur l'assurance. Sur capital initial, elle se paie chaque année ajoutée sur la totalité du prêt.</li>
+        <li>Négociez la modulation et l'absence d'indemnités de remboursement anticipé. C'est ce qui permet de corriger le choix plus tard.</li>
+      </ol>
+      <p><strong>Pour votre débat&nbsp;:</strong> le « plus court possible » est la bonne réponse par défaut. Le « plus long possible » est la bonne réponse pour celui qui place vraiment la différence en actions pendant 25&nbsp;ans et accepte de perdre environ 1 fois sur 4. Avoir à la fois « plus de sous à soi » et « tout placer », en revanche, c'est impossible.</p>
+    </div>
+  </section>
+
+  <footer id="sources">
+    <h2 style="font-size:1.4rem;color:var(--ink)">Sources</h2>
+    <p>Consultées le 6 octobre 2026. Les sources officielles sont privilégiées. Les sources secondaires sont indiquées comme telles.</p>
+    <ol class="sources">
+      <li id="src-1">Pretto, « Crédit immobilier en octobre 2026 », taux moyens 3,50 % (15 ans), 3,66 % (20 ans), 3,75 % (25 ans), mis à jour le 06/10/2026. <a href="https://www.pretto.fr/taux-immobilier/historique-taux-immobilier/2026/analyse-taux-immobilier-octobre-2026/">pretto.fr</a></li>
+      <li id="src-2">Observatoire Crédit Logement/CSA, « Analyse du marché immobilier, août 2026 », 15 ans 3,14 %, 20 ans 3,27 %, 25 ans 3,35 %. <a href="https://lobservatoire.creditlogement.fr/publications/analyse-marche-immobilier-aout-2026/">lobservatoire.creditlogement.fr</a></li>
+      <li id="src-3">CAFPI, baromètre des taux au 01/10/2026, taux moyens 15 ans 3,28 %, 25 ans 3,59 %. <a href="https://www.cafpi.fr/credit-immobilier/barometre-taux">cafpi.fr</a></li>
+      <li id="src-4">Pretto, « Taux proportionnel », 18/09/2026 (source secondaire). <a href="https://www.pretto.fr/taux-immobilier/cout-credit-immobilier/taux-proportionnel/">pretto.fr</a></li>
+      <li id="src-5">Décision D-HCSF-2021-7 du 29 septembre 2021 (taux d'effort de 35 %, durée de 25 ans, maturité de 27 ans avec différé). <a href="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000044178669">legifrance.gouv.fr</a></li>
+      <li id="src-6">Décision HCSF du 18 décembre 2023 (seuil de travaux abaissé à 10 %). <a href="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000048659704">legifrance.gouv.fr</a></li>
+      <li id="src-7">Code de la consommation, art. R313-25 (plafond des indemnités de remboursement anticipé). <a href="https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032807572">legifrance.gouv.fr</a></li>
+      <li id="src-8">Code de la consommation, art. L313-48 (exonérations&nbsp;: mobilité professionnelle, décès, cessation forcée d'activité). <a href="https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032225842">legifrance.gouv.fr</a></li>
+      <li id="src-9">Service-public.fr, assurance emprunteur (loi Lemoine&nbsp;: résiliation à tout moment, pas de questionnaire de santé jusqu'à 200 000 € par assuré si le prêt finit avant 60 ans). <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F1671">service-public.gouv.fr</a></li>
+      <li id="src-10">Meilleurtaux, taux d'assurance de prêt par âge en délégation, 25/08/2026 (source secondaire). <a href="https://www.meilleurtaux.com/assurance-de-pret/le-guide-de-l-assurance-de-pret/taux-assurance-pret-immobilier.html">meilleurtaux.com</a></li>
+      <li id="src-11">SeLoger, « Assurance de groupe et assurance individuelle » (capital initial et capital restant dû, source secondaire). <a href="https://edito.seloger.com/financement/assurance-de-pret-immobilier/quelle-difference-entre-assurance-emprunteur-de-groupe-et-assurance-individuelle-article-25244.html">seloger.com</a></li>
+      <li id="src-12">Service-public.fr, Livret A&nbsp;: 1,7 % du 1<sup>er</sup> août 2026 au 31 janvier 2027. <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F2365">service-public.gouv.fr</a></li>
+      <li id="src-13">ACPR, Analyses et synthèses n° 180, revalorisation 2025 des fonds euros&nbsp;: 2,63 % (nets de frais, avant prélèvements sociaux), 30/06/2026. <a href="https://acpr.banque-france.fr/system/files/2026-06/20260630_AS180_revalorisation_2025.pdf">acpr.banque-france.fr</a></li>
+      <li id="src-14">Service-public.fr, prélèvements sociaux sur les revenus du capital&nbsp;: 18,6 % depuis la LFSS 2026, 17,2 % maintenus pour l'assurance-vie. <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F2329">service-public.gouv.fr</a></li>
+      <li id="src-15">Impots.gouv.fr, retraits d'un PEA&nbsp;: après 5 ans, 18,6 % de prélèvements sociaux seulement, 17/07/2026. <a href="https://www.impots.gouv.fr/particulier/questions/jai-un-plan-depargne-en-actions-pea-les-retraits-sont-ils-imposables">impots.gouv.fr</a></li>
+      <li id="src-16">Service-public.fr, PEA&nbsp;: plafond de 150 000 €, un PEA par personne. <a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F2385">service-public.gouv.fr</a></li>
+      <li id="src-17">BOFiP, BOI-RFPI-BASE-20-80 (déduction des intérêts et de l'assurance emprunteur des revenus fonciers). <a href="https://bofip.impots.gouv.fr/bofip/5808-PGP.html/identifiant=BOI-RFPI-BASE-20-80-20120912">bofip.impots.gouv.fr</a></li>
+      <li id="src-18">Impots.gouv.fr, « Puis-je déduire les intérêts d'emprunt&nbsp;? », 17/07/2026. <a href="https://www.impots.gouv.fr/particulier/questions/jai-achete-un-bien-credit-puis-je-deduire-les-interets-demprunt">impots.gouv.fr</a></li>
+      <li id="src-19">Code de la construction et de l'habitation, art. D31-10-11 (durées et différés du PTZ par tranche). <a href="https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000049362873">legifrance.gouv.fr</a></li>
+      <li id="src-20">Action Logement, prêt accession&nbsp;: taux de 1 %, 30 000 € maximum, durée jusqu'à 25 ans. <a href="https://www.actionlogement.fr/le-pret-accession">actionlogement.fr</a></li>
+      <li id="src-21">Notaires de France, hausse des droits de mutation (jusqu'à 5 % de part départementale, 2025-2028). <a href="https://www.notaires.fr/fr/actualites/vente-immobiliere-et-augmentation-des-droits-de-mutation-titre-onereux">notaires.fr</a></li>
+      <li id="src-22">Crédit Logement, tarification de la caution (selon la destination, la nature et le montant de l'opération). <a href="https://www.creditlogement.fr/particuliers/tarification-initio/">creditlogement.fr</a></li>
+      <li id="src-23">Les clés de la banque (FBF), « La clause de modulation des échéances ». <a href="https://www.lesclesdelabanque.com/particulier/la-clause-de-modulation-des-echeances/">lesclesdelabanque.com</a></li>
+      <li id="src-24">SDES (ministère de la Transition écologique), « Les plus-values immobilières en France en 2021 », février 2026&nbsp;: durée moyenne de détention de 12,2 ans. <a href="https://www.statistiques.developpement-durable.gouv.fr/media/9060/download?inline">statistiques.developpement-durable.gouv.fr</a></li>
+      <li id="src-25">Insee, indice des prix à la consommation, estimation provisoire de septembre 2026&nbsp;: +3,0 % sur un an. <a href="https://www.insee.fr/fr/statistiques/9056956">insee.fr</a></li>
+      <li id="src-26">Banque de France, projections macroéconomiques de septembre 2026 (croissance de 0,4 % en 2026, inflation IPCH de 1,9 % en 2027 et 1,6 % en 2028, salaire moyen par tête +2,0 % en 2026). <a href="https://www.banque-france.fr/system/files/2026-09/Projections_macroeconomiques_Septembre_2026.pdf">banque-france.fr</a></li>
+      <li id="src-27">Insee Première n° 2105, comptes nationaux 2025&nbsp;: PIB +0,8 % en 2025, +1,5 % en 2024. <a href="https://www.insee.fr/fr/statistiques/8996855">insee.fr</a></li>
+      <li id="src-28">MSCI, fiche de l'indice MSCI World (EUR, net returns) au 30/09/2026&nbsp;: 6,67 % par an depuis le 29/12/2000, écart-type de 13,44 % sur 10 ans, perte maximale de 53,6 %. <a href="https://www.msci.com/resources/factsheets/index_fact_sheet/msci-world-index-eur-net.pdf">msci.com</a></li>
+      <li id="src-29">MSCI, fiche de l'indice MSCI World (USD, gross returns) au 30/09/2026&nbsp;: 9,02 % par an depuis le 31/12/1987, écart-type de 15,06 % sur 5 ans, perte maximale de 57,5 %. <a href="https://www.msci.com/resources/factsheets/index_fact_sheet/msci-world-index.pdf">msci.com</a></li>
+      <li id="src-30">UBS Global Investment Returns Yearbook 2026 (Dimson, Marsh, Staunton), résumé public&nbsp;: actions des pays développés à 8,5 % par an depuis 1900, en dollars. <a href="https://www.ubs.com/content/dam/assets/wm/static/cio/documents/giry2026-summary-public.pdf">ubs.com</a></li>
+      <li id="src-31">Cambridge Judge Business School, 07/03/2025&nbsp;: actions mondiales à 5,2 % par an en réel sur 1900-2024. <a href="https://www.jbs.cam.ac.uk/2025/report-stocks-have-far-outperformed-over-the-past-125-years/">jbs.cam.ac.uk</a></li>
+      <li id="src-32">Stiftung Warentest, MSCI World, 10/07/2026&nbsp;: au pire, au moins 13 ans de placement pour un rendement positif (source secondaire). <a href="https://www.test.de/MSCI-World-Index-5886867-5886872/">test.de</a></li>
+      <li id="src-33">Nikkei 225&nbsp;: record de clôture du 29/12/1989 (38 915,87) dépassé le 22/02/2024 (source secondaire). <a href="https://en.wikipedia.org/wiki/Nikkei_225">wikipedia.org</a></li>
+      <li id="src-34">justETF, Amundi MSCI World Swap UCITS ETF (LU1681043599), éligible au PEA, frais courants de 0,38 %. <a href="https://www.justetf.com/fr/etf-profile.html?isin=LU1681043599">justetf.com</a></li>
+    </ol>
+    <p>Ce document est une étude pédagogique, pas un conseil financier personnalisé. Les performances passées ne préjugent pas des performances futures.</p>
+  </footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ENGINE-START
+// Prêt amortissable à taux fixe, taux mensuel proportionnel (taux annuel / 12).
+// insMode : 'initial' (prime fixe = C × a / 12) ou 'crd' (prime = capital restant dû × a / 12).
+function loan(C, rate, years, ins, insMode){
+  const n=Math.round(years*12), i=rate/12, P= i===0? C/n : C*i/(1-Math.pow(1+i,-n));
+  let crd=C, sumInt=0, sumIns=0; const crdArr=[C], pay=[0];
+  for(let m=1;m<=n;m++){
+    const prem = insMode==='crd' ? crd*ins/12 : C*ins/12;
+    const it=crd*i; sumInt+=it; sumIns+=prem; crd=Math.max(0,crd-(P-it));
+    crdArr.push(crd); pay.push(P+prem);
+  }
+  return {C,rate,years,ins,insMode,n,P,M:pay[1],I:pay[1]-P,pay,crd:crdArr,interest:sumInt,insurance:sumIns,cost:sumInt+sumIns};
+}
+function capacity(Mmax, rate, years, ins){ const n=years*12, i=rate/12; return Mmax/((i===0?1/n:i/(1-Math.pow(1+i,-n)))+ins/12); }
+// Plafond légal des indemnités de remboursement anticipé : 6 mois d'intérêts, 3 % du capital restant dû
+function ira(crd, rate){ return Math.min(crd*rate/2, 0.03*crd); }
+// Comparaison à budget égal. Chaque mois, chaque ménage dispose du même budget logement
+// (la plus haute des deux premières mensualités) ; ce qui n'est pas absorbé par la mensualité est placé.
+// Placement : rendement brut R, frais annuels f, impôt `tax` sur les plus-values latentes à la date d'évaluation.
+// Patrimoine financier net = placements nets d'impôt latent − capital restant dû − IRA (si revente avant le terme).
+function makeComparator(A, B){
+  const budget=Math.max(A.M,B.M), H=Math.max(A.n,B.n);
+  const free=L=>{ const a=[0]; for(let m=1;m<=H;m++) a.push(budget-(m<=L.n?L.pay[m]:0)); return a; };
+  return {A,B,budget,H,freeA:free(A),freeB:free(B)};
+}
+function netWorth(V,K,tax,crd,L,withIra){ return V - tax*Math.max(0,V-K) - crd - (withIra&&crd>0? ira(crd,L.rate):0); }
+// Trajectoire déterministe : renvoie l'écart B − A pour chaque mois (évalué « si l'on revend ce mois-là »)
+function pathDiff(cp, R, fees, tax, withIra){
+  const g=Math.pow((1+R)*(1-fees),1/12)-1; let VA=0,KA=0,VB=0,KB=0; const d=[netWorth(0,0,tax,cp.B.C,cp.B,withIra)-netWorth(0,0,tax,cp.A.C,cp.A,withIra)], wa=[], wb=[];
+  wa.push(-cp.A.C); wb.push(-cp.B.C);
+  for(let m=1;m<=cp.H;m++){
+    VA=VA*(1+g)+cp.freeA[m]; KA+=cp.freeA[m]; VB=VB*(1+g)+cp.freeB[m]; KB+=cp.freeB[m];
+    const ca=m<=cp.A.n?cp.A.crd[m]:0, cb=m<=cp.B.n?cp.B.crd[m]:0;
+    const na=netWorth(VA,KA,tax,ca,cp.A,withIra), nb=netWorth(VB,KB,tax,cb,cp.B,withIra);
+    wa.push(na); wb.push(nb); d.push(nb-na);
+  }
+  return {d,wa,wb};
+}
+function diffAt(cp,R,fees,tax,m,withIra){ return pathDiff(cp,R,fees,tax,withIra).d[m]; }
+// Rendement brut annuel qui égalise les deux stratégies au mois m (bissection ; l'écart croît avec R)
+function breakeven(cp,fees,tax,m,withIra){
+  let lo=-0.05, hi=0.30;
+  if(diffAt(cp,hi,fees,tax,m,withIra)<0) return Infinity;
+  if(diffAt(cp,lo,fees,tax,m,withIra)>0) return -Infinity;
+  for(let k=0;k<50;k++){ const mid=(lo+hi)/2; if(diffAt(cp,mid,fees,tax,m,withIra)>0) hi=mid; else lo=mid; }
+  return (lo+hi)/2;
+}
+// Monte-Carlo : rendements mensuels log-normaux, médiane annualisée = R, volatilité annuelle sigma.
+// Les deux ménages subissent exactement les mêmes marchés. Générateur pseudo-aléatoire à graine fixe (reproductible).
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function monteCarlo(cp, R, sigma, fees, tax, m, withIra, N, seed){
+  const rnd=mulberry32(seed||12345), mu=Math.log((1+R)*(1-fees))/12, s=sigma/Math.sqrt(12), out=new Float64Array(N);
+  const ca=m<=cp.A.n?cp.A.crd[m]:0, cb=m<=cp.B.n?cp.B.crd[m]:0;
+  for(let k=0;k<N;k++){
+    let VA=0,KA=0,VB=0,KB=0;
+    for(let t=1;t<=m;t++){
+      const u1=rnd()||1e-12, u2=rnd(); const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+      const f=Math.exp(mu+s*z);
+      VA=VA*f+cp.freeA[t]; KA+=cp.freeA[t]; VB=VB*f+cp.freeB[t]; KB+=cp.freeB[t];
+    }
+    out[k]=netWorth(VB,KB,tax,cb,cp.B,withIra)-netWorth(VA,KA,tax,ca,cp.A,withIra);
+  }
+  const sorted=Array.from(out).sort((a,b)=>a-b), q=p=>sorted[Math.min(N-1,Math.floor(p*N))];
+  return {pWin: sorted.filter(x=>x>0).length/N, p10:q(0.10), p50:q(0.5), p90:q(0.90), p05:q(0.05), sorted};
+}
+// Grille de taux Pretto d'octobre 2026 (15, 20, 25 ans), prolongée en ligne droite hors de cet intervalle
+const GRID=[[15,3.50],[20,3.66],[25,3.75]];
+function gridRate(y){ const seg= y<=20? [GRID[0],GRID[1]] : [GRID[1],GRID[2]]; const [[y0,r0],[y1,r1]]=seg; return r0+(r1-r0)*(y-y0)/(y1-y0); }
+// Monte-Carlo sur toute la trajectoire : quantiles annuels de l'écart B − A (revente à chaque date, IRA comprises)
+function monteCarloPath(cp, R, sigma, fees, tax, withIra, N, seed){
+  const rnd=mulberry32(seed||12345), mu=Math.log((1+R)*(1-fees))/12, s=sigma/Math.sqrt(12), Y=Math.floor(cp.H/12);
+  const cols=[]; for(let y=0;y<=Y;y++) cols.push(new Float64Array(N));
+  for(let k=0;k<N;k++){
+    let VA=0,KA=0,VB=0,KB=0;
+    cols[0][k]=(-cp.B.C-(withIra?ira(cp.B.C,cp.B.rate):0))-(-cp.A.C-(withIra?ira(cp.A.C,cp.A.rate):0));
+    for(let t=1;t<=cp.H;t++){
+      const u1=rnd()||1e-12, u2=rnd(); const f=Math.exp(mu+s*Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2));
+      VA=VA*f+cp.freeA[t]; KA+=cp.freeA[t]; VB=VB*f+cp.freeB[t]; KB+=cp.freeB[t];
+      if(t%12===0){ const ca=t<=cp.A.n?cp.A.crd[t]:0, cb=t<=cp.B.n?cp.B.crd[t]:0;
+        cols[t/12][k]=netWorth(VB,KB,tax,cb,cp.B,withIra)-netWorth(VA,KA,tax,ca,cp.A,withIra); }
+    }
+  }
+  return cols.map(c=>{ const a=Array.from(c).sort((x,y)=>x-y), q=p=>a[Math.min(N-1,Math.floor(p*N))];
+    let w=0; for(const x of a) if(x>0) w++; return {p10:q(.1), p50:q(.5), p90:q(.9), pWin:w/N, sorted:a}; });
+}
+// ENGINE-END
+
+const nf0=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0});
+const nf1=new Intl.NumberFormat('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const nf2=new Intl.NumberFormat('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const NB=' ';
+const eur=x=>nf0.format(Math.round(x)||0)+NB+'€';
+const eur1000=x=>nf0.format(Math.round(x/1000)*1000||0)+NB+'€';
+const keur=x=>(Math.abs(x)>=1000? nf0.format(Math.round(x/1000))+NB+'k€' : nf0.format(Math.round(x))+NB+'€');
+const pct0=x=>nf0.format(x*100)+NB+'%';
+const pct1=x=>nf1.format(x*100)+NB+'%';
+const pct2=x=>nf2.format(x*100)+NB+'%';
+const signed=x=>(x>=0?'+':'−')+eur(Math.abs(x));
+const FMT={eur, eur1000, pct0, pct1, pct2, int:x=>nf0.format(x)};
+
+function tok(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function theme(){
+  return { ink:tok('--ink'), ink2:tok('--ink-2'), muted:tok('--muted'), line:tok('--line'), axis:tok('--axis'), surface:tok('--surface'),
+    court:tok('--court'), long:tok('--long'), mid:tok('--mid'), seq1:tok('--seq-1'), seq2:tok('--seq-2'), seq3:tok('--seq-3'),
+    courtWash:tok('--court-wash'), longWash:tok('--long-wash'), accentWash:tok('--accent-wash'), data:tok('--f-data'), body:tok('--f-body') };
+}
+
+/* ---------- Cas de référence : toutes les valeurs citées dans le texte viennent d'ici ---------- */
+const CASE={C:250000, rev:5500, ins:0.003, insMode:'initial', rates:{15:.035,20:.0366,25:.0375},
+  fees:0.0038, taxPEA:0.186, sigma:0.15, R:0.08, Rmsci:0.0667, livret:0.017, infl:0.02, g:0.02, N:4000, seed:7};
+let K={}, S={};
+function computeCase(){
+  const L={}; [15,20,25].forEach(d=>L[d]=loan(CASE.C,CASE.rates[d],d,CASE.ins,CASE.insMode));
+  const cp=makeComparator(L[15],L[25]);
+  const Mmax=CASE.rev*0.35;
+  const det8=pathDiff(cp,CASE.R,CASE.fees,CASE.taxPEA,true);
+  const mc8=monteCarloPath(cp,CASE.R,CASE.sigma,CASE.fees,CASE.taxPEA,true,CASE.N,CASE.seed);
+  const mc667=monteCarloPath(cp,CASE.Rmsci,CASE.sigma,CASE.fees,CASE.taxPEA,true,CASE.N,CASE.seed);
+  const disc=(arr,inf)=>arr.reduce((s,x,m)=>s+x/Math.pow(1+inf,m/12),0);
+  let cross8=null; for(let y=1;y<=25;y++){ if(det8.d[y*12]>0){ cross8=y; break; } }
+  let versA=0, versB=0; for(let m=1;m<=cp.H;m++){ versA+=cp.freeA[m]; versB+=cp.freeB[m]; }
+  K={
+    m15:L[15].M, m20:L[20].M, m25:L[25].M, cost15:L[15].cost, cost25:L[25].cost, budget:cp.budget, delta:cp.budget-L[25].M,
+    mmax:Mmax, cap15:capacity(Mmax,.035,15,CASE.ins), cap25:capacity(Mmax,.0375,25,CASE.ins),
+    eff15:L[15].M/CASE.rev, eff15y11:L[15].M/(CASE.rev*Math.pow(1+CASE.g,10)),
+    crd12_15:L[15].crd[144], crd12_25:L[25].crd[144],
+    bePure:breakeven(cp,0,0,300,false), bePea:breakeven(cp,CASE.fees,CASE.taxPEA,300,false),
+    dLivretAbs:Math.abs(diffAt(cp,CASE.livret,0,0,300,false)),
+    d8:det8.d[300], cross8:cross8,
+    pwin25:mc8[25].pWin, plose25:1-mc8[25].pWin, p10abs:Math.abs(mc8[25].p10), p50:mc8[25].p50, p90:mc8[25].p90, pwin8:mc8[8].pWin,
+    pwin25_667:mc667[25].pWin,
+    freeA:disc(cp.freeA,0), freeB:disc(cp.freeB,0), freeAr:disc(cp.freeA,CASE.infl), freeBr:disc(cp.freeB,CASE.infl),
+    versA:Math.max(versA,versB)
+  };
+  S={L,cp,det8,mc8,mc667};
+}
+function fillKeys(){
+  document.querySelectorAll('[data-k]').forEach(el=>{ const v=K[el.dataset.k]; if(v==null||!isFinite(v)) return; el.textContent=(FMT[el.dataset.f]||String)(v); });
+}
+
+/* ---------- Graphiques ---------- */
+const refLines={ id:'refLines', beforeDatasetsDraw(chart, _a, opts){
+  const lines=opts&&opts.lines; if(!lines||!lines.length) return;
+  const {ctx, chartArea:a, scales}=chart; ctx.save();
+  for(const l of lines){
+    const s=scales[l.axis==='x'?'x':'y']; const p=s.getPixelForValue(l.value);
+    if(!isFinite(p)) continue;
+    if(l.axis==='x'){ if(p<a.left-1||p>a.right+1) continue; } else { if(p<a.top-1||p>a.bottom+1) continue; }
+    ctx.strokeStyle=l.color; ctx.lineWidth=l.width||1; ctx.beginPath();
+    if(l.axis==='x'){ ctx.moveTo(p,a.top); ctx.lineTo(p,a.bottom); } else { ctx.moveTo(a.left,p); ctx.lineTo(a.right,p); }
+    ctx.stroke();
+    if(l.label){ ctx.fillStyle=l.textColor||l.color; ctx.font='500 11px '+(opts.font||'sans-serif');
+      if(l.axis==='x'){ const right=p>a.left+(a.right-a.left)*0.6; ctx.textAlign=right?'right':'left'; ctx.fillText(l.label, p+(right?-6:6), a.top+12+(l.row||0)*14); }
+      else { ctx.textAlign='left'; ctx.fillText(l.label, a.left+4, p-6); } }
+  }
+  ctx.restore(); } };
+
+function baseOpts(T, {xTitle, yFmt, xFmt, tipFmt, stacked, yMin, yMax, xType}={}){
+  return {
+    responsive:true, maintainAspectRatio:false, animation:false,
+    interaction:{mode:'index', intersect:false},
+    layout:{padding:{top:4,right:8}},
+    plugins:{
+      legend:{display:false},
+      tooltip:{ backgroundColor:T.surface, titleColor:T.ink, bodyColor:T.ink2, borderColor:T.axis, borderWidth:1, padding:10,
+        titleFont:{family:T.body, weight:'600'}, bodyFont:{family:T.data, size:12}, boxPadding:4, usePointStyle:true,
+        callbacks: tipFmt? {label:tipFmt} : {} },
+      refLines:{lines:[], font:T.body}
+    },
+    scales:{
+      x:{ type:xType||'category', stacked:!!stacked, grid:{display:false}, border:{color:T.axis},
+        ticks:Object.assign({color:T.muted, font:{family:T.data, size:11}, maxRotation:0, autoSkipPadding:12}, xFmt? {callback:function(v){return xFmt(xType==='linear'?v:this.getLabelForValue(v));}} : {}),
+        title: xTitle? {display:true, text:xTitle, color:T.muted, font:{family:T.body, size:11}} : {display:false} },
+      y:{ stacked:!!stacked, min:yMin, max:yMax, grid:{color:T.line}, border:{display:false},
+        ticks:Object.assign({color:T.muted, font:{family:T.data, size:11}, maxTicksLimit:6}, yFmt? {callback:yFmt} : {}) }
+    }
+  };
+}
+const lineDs=(label,data,color,extra={})=>Object.assign({label,data,borderColor:color,backgroundColor:color,borderWidth:2,pointRadius:0,pointHoverRadius:5,pointHoverBorderWidth:2,tension:0,borderCapStyle:'round',borderJoinStyle:'round'},extra);
+const charts={};
+function mk(id,cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart(document.getElementById(id),cfg); return charts[id]; }
+function upsert(id,type,datasets,options,labels){
+  const ch=charts[id];
+  if(ch && ch.config.type===type){ ch.data.datasets=datasets; if(labels) ch.data.labels=labels; ch.options=options; ch.update('none'); }
+  else mk(id,{type, data:labels?{labels,datasets}:{datasets}, options});
+}
+function linX(o,min,max,step){ o.scales.x.min=min; o.scales.x.max=max; o.scales.x.ticks.stepSize=step; return o; }
+function histogram(sorted, bins){
+  const lo=sorted[Math.floor(sorted.length*0.01)], hi=sorted[Math.floor(sorted.length*0.99)];
+  const step=niceStep((hi-lo)/bins), start=Math.floor(lo/step)*step, n=Math.ceil((hi-start)/step);
+  const counts=new Array(n).fill(0);
+  for(const x of sorted){ let k=Math.floor((x-start)/step); if(k<0) k=0; if(k>=n) k=n-1; counts[k]++; }
+  return {start, step, counts, total:sorted.length};
+}
+function niceStep(raw){ const p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p; }
+
+function buildStatic(){
+  const T=theme(), {L,cp,det8,mc8,mc667}=S, durs=[15,20,25];
+
+  // Coût total
+  { const o=baseOpts(T,{stacked:true, yFmt:v=>keur(v), tipFmt:c=>' '+c.dataset.label+' : '+eur(c.raw)});
+    o.plugins.tooltip.callbacks.footer=items=>{ const d=durs[items[0].dataIndex]; return 'Total : '+eur(L[d].cost)+'\nMensualité : '+eur(L[d].M); };
+    o.plugins.tooltip.footerFont={family:T.data,size:12,weight:'500'}; o.plugins.tooltip.footerColor=T.ink;
+    mk('c-cout',{type:'bar', data:{labels:durs.map(d=>d+' ans'), datasets:[
+      {label:'Intérêts', data:durs.map(d=>L[d].interest), backgroundColor:T.court, borderColor:T.surface, borderWidth:{top:2}, borderSkipped:'bottom', maxBarThickness:40},
+      {label:'Assurance', data:durs.map(d=>L[d].insurance), backgroundColor:T.seq1, borderRadius:{topLeft:4,topRight:4}, borderSkipped:'bottom', maxBarThickness:40}
+    ]}, options:o}); }
+
+  // Capacité
+  { const caps=durs.map(d=>capacity(K.mmax,CASE.rates[d],d,CASE.ins));
+    const o=baseOpts(T,{yFmt:v=>keur(v), yMin:0, tipFmt:c=>' Capacité : '+eur(c.raw)});
+    o.plugins.refLines.lines=[{axis:'y', value:CASE.C, color:T.ink2, label:'Besoin 250 k€', width:1.5}];
+    mk('c-capa',{type:'bar', data:{labels:durs.map(d=>d+' ans'), datasets:[
+      {label:'Capacité', data:caps, backgroundColor:T.seq2, borderRadius:{topLeft:4,topRight:4}, borderSkipped:'bottom', maxBarThickness:40}
+    ]}, options:o}); }
+
+  // Capital restant dû
+  { const years=[...Array(26).keys()], pts=Lx=>years.map(y=>({x:y, y: y*12<=Lx.n? Lx.crd[y*12] : 0}));
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Année', yFmt:v=>keur(v), yMin:0, tipFmt:c=>' '+c.dataset.label+' : '+eur(c.raw.y)}),0,25,5);
+    o.plugins.tooltip.callbacks.title=items=>'Fin de l\'année '+items[0].raw.x;
+    o.plugins.refLines.lines=[{axis:'x', value:12, color:T.axis, textColor:T.muted, label:'12 ans'}];
+    mk('c-crd',{type:'line', data:{datasets:[ lineDs('15 ans',pts(L[15]),T.court), lineDs('25 ans',pts(L[25]),T.long) ]}, options:o}); }
+
+  // Écart final selon le rendement brut
+  { const Rs=[]; for(let r=0;r<=10.0001;r+=0.25) Rs.push(+r.toFixed(2));
+    const pure=Rs.map(r=>({x:r, y:diffAt(cp,r/100,0,0,300,false)})), pea=Rs.map(r=>({x:r, y:diffAt(cp,r/100,CASE.fees,CASE.taxPEA,300,false)}));
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Rendement brut annuel (%)', xFmt:v=>Number.isInteger(v)? nf0.format(v)+' %':'', yFmt:v=>keur(v), tipFmt:c=>' '+c.dataset.label+' : '+signed(c.raw.y)}),0,10,1);
+    o.plugins.tooltip.callbacks.title=items=>'Rendement brut '+nf2.format(items[0].raw.x)+' %';
+    o.plugins.refLines.lines=[{axis:'y', value:0, color:T.axis},{axis:'x', value:1.7, color:T.axis, textColor:T.muted, label:'Livret A'},{axis:'x', value:8, color:T.axis, textColor:T.muted, label:'8 %'}];
+    mk('c-be',{type:'line', data:{datasets:[ lineDs('Sans frais ni impôt',pure,T.ink), lineDs('PEA',pea,T.mid) ]}, options:o}); }
+
+  // Revente anticipée
+  { const years=[...Array(25).keys()].map(k=>k+1);
+    const series=[[CASE.livret,0,0,T.seq1,'Livret A 1,7 %'],[CASE.Rmsci,CASE.fees,CASE.taxPEA,T.seq2,'PEA à 6,67 %'],[CASE.R,CASE.fees,CASE.taxPEA,T.seq3,'PEA à 8 %']];
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Année de revente', yFmt:v=>keur(v), tipFmt:c=>' '+c.dataset.label+' : '+signed(c.raw.y)}),1,25,4);
+    o.plugins.tooltip.callbacks.title=items=>'Revente en fin d\'année '+items[0].raw.x;
+    o.plugins.refLines.lines=[{axis:'y', value:0, color:T.axis}];
+    mk('c-revente',{type:'line', data:{datasets: series.map(([r,f,t,col,lab])=>{ const d=pathDiff(cp,r,f,t,true).d; return lineDs(lab, years.map(y=>({x:y, y:d[y*12]})), col); }) }, options:o}); }
+
+  // Taux d'effort
+  { const years=[...Array(25).keys()], eff=Lx=>years.map(y=>({x:y+1, y: y<Lx.years ? Lx.M/(CASE.rev*Math.pow(1+CASE.g,y)) : null}));
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Année', yFmt:v=>nf0.format(v*100)+' %', yMin:0, yMax:0.4, tipFmt:c=>' '+c.dataset.label+' : '+pct1(c.raw.y)}),1,25,4);
+    o.plugins.tooltip.callbacks.title=items=>'Année '+items[0].raw.x;
+    o.plugins.refLines.lines=[{axis:'y', value:0.35, color:T.ink2, label:'35 %'}];
+    mk('c-effort',{type:'line', data:{datasets:[ lineDs('15 ans',eff(L[15]),T.court), lineDs('20 ans',eff(L[20]),T.mid), lineDs('25 ans',eff(L[25]),T.long) ]}, options:o}); }
+
+  // Argument 1 : argent disponible
+  { const pts=arr=>{ const a=[]; for(let m=1;m<=cp.H;m++) a.push({x:m/12, y:arr[m]}); return a; };
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Année', yFmt:v=>eur(v), yMin:0, tipFmt:c=>' '+c.dataset.label+' : '+eur(c.raw.y)+' / mois'}),0,25,5);
+    o.plugins.tooltip.callbacks.title=items=>'Année '+Math.ceil(items[0].raw.x);
+    mk('a-dispo',{type:'line', data:{datasets:[ lineDs('Prêt 15 ans',pts(cp.freeA),T.court,{stepped:true}), lineDs('Prêt 25 ans',pts(cp.freeB),T.long,{stepped:true}) ]}, options:o}); }
+
+  // Argument 2 : patrimoine des deux ménages à 8 %
+  { const years=[...Array(26).keys()];
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Année', yFmt:v=>keur(v), tipFmt:c=>' '+c.dataset.label+' : '+signed(c.raw.y)}),0,25,5);
+    o.plugins.tooltip.callbacks.title=items=>'Fin de l\'année '+items[0].raw.x+' (revente, indemnités comprises)';
+    o.plugins.refLines.lines=[{axis:'y', value:0, color:T.axis}];
+    mk('a-patri',{type:'line', data:{datasets:[ lineDs('Prêt 15 ans',years.map(y=>({x:y,y:det8.wa[y*12]})),T.court), lineDs('Prêt 25 ans',years.map(y=>({x:y,y:det8.wb[y*12]})),T.long) ]}, options:o}); }
+
+  // Argument 3 : histogramme Monte-Carlo
+  { const h=histogram(mc8[25].sorted, 28), labels=[], neg=[], pos=[];
+    h.counts.forEach((c,k)=>{ const a=h.start+k*h.step, share=c/h.total; labels.push(keur(a)); if(a+h.step/2<0){ neg.push(share); pos.push(null); } else { pos.push(share); neg.push(null); } });
+    const o=baseOpts(T,{stacked:true, xTitle:'Avance du prêt long après 25 ans', yFmt:v=>nf0.format(v*100)+' %', yMin:0, tipFmt:c=>c.raw==null?null:' '+pct1(c.raw)+' des marchés'});
+    o.interaction={mode:'index', intersect:false}; o.scales.x.ticks.maxTicksLimit=7;
+    o.plugins.tooltip.callbacks.title=items=>{ const k=items[0].dataIndex, a=h.start+k*h.step; return 'De '+keur(a)+' à '+keur(a+h.step); };
+    o.plugins.tooltip.filter=c=>c.raw!=null;
+    mk('a-hist',{type:'bar', data:{labels, datasets:[
+      {label:'Le court gagne', data:neg, backgroundColor:T.court, borderRadius:{topLeft:3,topRight:3}, borderSkipped:'bottom', categoryPercentage:1, barPercentage:0.9},
+      {label:'Le long gagne', data:pos, backgroundColor:T.long, borderRadius:{topLeft:3,topRight:3}, borderSkipped:'bottom', categoryPercentage:1, barPercentage:0.9}
+    ]}, options:o}); }
+
+  // Argument 4 : probabilité selon l'année de revente
+  { const years=[...Array(25).keys()].map(k=>k+1);
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Année de revente', yFmt:v=>nf0.format(v*100)+' %', yMin:0, yMax:1, tipFmt:c=>' '+c.dataset.label+' : '+pct0(c.raw.y)}),1,25,4);
+    o.plugins.tooltip.callbacks.title=items=>'Revente en fin d\'année '+items[0].raw.x;
+    o.plugins.refLines.lines=[{axis:'y', value:0.5, color:T.axis, textColor:T.muted, label:'Pile ou face'}];
+    mk('a-proba',{type:'line', data:{datasets:[ lineDs('8 % médian',years.map(y=>({x:y,y:mc8[y].pWin})),T.long), lineDs('6,67 % médian',years.map(y=>({x:y,y:mc667[y].pWin})),T.seq2) ]}, options:o}); }
+}
+
+/* ---------- Test de robustesse ---------- */
+function robustRows(){
+  const C=CASE.C, base={r15:.035, r25:.0375, ins:CASE.ins, mode:'initial', fees:CASE.fees, tax:CASE.taxPEA, R:CASE.R, sale:300};
+  return [
+    ['Cas de référence', {}],
+    ['Taux Crédit Logement/CSA, août 2026 (3,14 % et 3,35 %)', {r15:.0314, r25:.0335}],
+    ['Taux CAFPI, 1er octobre 2026 (3,28 % et 3,59 %)', {r15:.0328, r25:.0359}],
+    ['Même taux sur 15 et 25 ans (3,50 %)', {r25:.035}],
+    ['Assurance sur capital restant dû', {mode:'crd'}],
+    ['Délégation à 35 ans : 0,13 % sur capital restant dû', {ins:.0013, mode:'crd'}],
+    ['Délégation à 55 ans : 0,47 % sur capital restant dû', {ins:.0047, mode:'crd'}],
+    ['Sans assurance', {ins:0}],
+    ['Compte-titres (flat tax 31,4 %)', {tax:.314}],
+    ['Sans frais ni impôt', {fees:0, tax:0}],
+    ['Rendement de 6,67 % (MSCI World en euros depuis 2000)', {R:CASE.Rmsci}],
+    ['Revente au bout de 12 ans (évaluée à 12 ans)', {sale:144}]
+  ].map(([label,v])=>{ const p=Object.assign({},base,v);
+    const A=loan(C,p.r15,15,p.ins,p.mode), B=loan(C,p.r25,25,p.ins,p.mode), cp=makeComparator(A,B);
+    const withIra=p.sale<300;
+    const pure=breakeven(cp,0,0,300,false), be=breakeven(cp,p.fees,p.tax,p.sale,withIra), d=diffAt(cp,p.R,p.fees,p.tax,p.sale,withIra);
+    const mc=monteCarlo(cp,p.R,CASE.sigma,p.fees,p.tax,p.sale,withIra,2000,CASE.seed);
+    return {label, pure, be, d, pWin:mc.pWin, base:label==='Cas de référence'}; });
+}
+function renderRobust(){
+  const tb=document.querySelector('#t-robust tbody'); tb.innerHTML='';
+  for(const r of robustRows()){ const tr=document.createElement('tr');
+    tr.innerHTML='<td class="wrap">'+(r.base?'<strong>'+r.label+'</strong>':r.label)+'</td><td class="num">'+pct2(r.pure)+'</td><td class="num">'+(isFinite(r.be)?pct2(r.be):'—')+'</td><td class="num '+(r.d>0?'pos':'neg')+'">'+signed(Math.round(r.d/100)*100)+'</td><td class="num">'+pct0(r.pWin)+'</td>';
+    tb.appendChild(tr); }
+}
+
+/* ---------- Simulateur ---------- */
+const $=id=>document.getElementById(id);
+const ids=['prix','notaire','apport','revenu','dA','tA','dB','tB','ass','insMode','rend','fees','env','vol','infl','crois','rev'];
+function readState(){ const s={}; ids.forEach(k=>s[k]=$(k).tagName==='SELECT'&&k==='insMode'? $(k).value : parseFloat($(k).value)); s.ira=$('ira').checked; return s; }
+const PRESETS={ livret:{rend:1.7,fees:0,env:'0',vol:0}, euros:{rend:2.63,fees:0,env:'0.172',vol:0}, msci:{rend:6.67,fees:0.38,env:'0.186',vol:15}, pote:{rend:8,fees:0.38,env:'0.186',vol:15} };
+function syncPresets(){ const s={rend:+$('rend').value, fees:+$('fees').value, env:$('env').value, vol:+$('vol').value};
+  document.querySelectorAll('#presets button').forEach(b=>{ const p=PRESETS[b.dataset.p]; b.setAttribute('aria-pressed', String(Math.abs(p.rend-s.rend)<1e-9 && Math.abs(p.fees-s.fees)<1e-9 && p.env===s.env && Math.abs(p.vol-s.vol)<1e-9)); }); }
+
+function kpiHTML(title, cls, L, s, saleM){
+  const d=Math.pow(1+s.infl/100,1/12)-1; let pv=0; for(let m=1;m<=L.n;m++) pv+=L.pay[m]/Math.pow(1+d,m);
+  const crdSale= saleM<L.n? L.crd[saleM] : 0, effort=L.M/s.revenu;
+  const flags=[];
+  flags.push(effort>0.35? '<span class="flag">Effort au-dessus de 35 % : hors norme HCSF</span>' : '<span class="flag ok">Effort sous 35 %</span>');
+  if(L.years>25) flags.push('<span class="flag">Plus de 25 ans : hors norme HCSF</span>');
+  return '<h3><span class="dot '+cls+'"></span>'+title+'</h3><dl>'+
+    '<dt>Mensualité'+(L.insMode==='crd'?' (1<sup>re</sup>)':'')+'</dt><dd class="strong">'+eur(L.M)+'</dd>'+
+    '<dt>dont assurance</dt><dd>'+eur(L.I)+'</dd>'+
+    '<dt>Taux d\'effort, 1<sup>re</sup> année</dt><dd>'+pct1(effort)+'</dd>'+
+    '<dt>Intérêts</dt><dd>'+eur(L.interest)+'</dd>'+
+    '<dt>Assurance totale</dt><dd>'+eur(L.insurance)+'</dd>'+
+    '<dt>Coût total</dt><dd class="strong">'+eur(L.cost)+'</dd>'+
+    '<dt>Coût en euros d\'aujourd\'hui</dt><dd>'+eur(pv-L.C)+'</dd>'+
+    (saleM<L.n ? '<dt>Capital dû à la revente</dt><dd>'+eur(crdSale)+'</dd>' : '')+
+    '</dl><div class="flags">'+flags.join('')+'</div>';
+}
+
+let mcTimer=null, simCtx=null;
+function update(source){
+  let dA=+$('dA').value, dB=+$('dB').value;
+  if(source==='dA' && dB<=dA){ dB=dA+1; $('dB').value=dB; $('tB').value=gridRate(dB).toFixed(2); }
+  if(source==='dB' && dA>=dB){ dA=dB-1; $('dA').value=dA; $('tA').value=gridRate(dA).toFixed(2); }
+  if(source==='dA') $('tA').value=gridRate(dA).toFixed(2);
+  if(source==='dB') $('tB').value=gridRate(+$('dB').value).toFixed(2);
+  const wasMax=+$('rev').value>=+$('rev').max;
+  $('rev').max=$('dB').value; if(wasMax||+$('rev').value>+$('dB').value) $('rev').value=$('dB').value;
+
+  const s=readState();
+  const C=Math.max(1000, s.prix*(1+s.notaire)-s.apport);
+  $('o-prix').value=eur(s.prix); $('o-apport').value=eur(s.apport); $('o-revenu').value=eur(s.revenu)+'/mois';
+  $('o-capital').innerHTML='Montant emprunté&nbsp;: <strong class="num">'+eur(C)+'</strong> <span class="note">(prix + frais de notaire − apport)</span>';
+  $('o-dA').value=s.dA+' ans'; $('o-dB').value=s.dB+' ans';
+  $('o-tA').value=nf2.format(s.tA)+' %'; $('o-tB').value=nf2.format(s.tB)+' %';
+  $('o-ass').value=nf2.format(s.ass)+' %'; $('o-rend').value=nf2.format(s.rend)+' %'; $('o-fees').value=nf2.format(s.fees)+' %';
+  $('o-vol').value=nf1.format(s.vol)+' %'; $('o-infl').value=nf1.format(s.infl)+' %'; $('o-crois').value=nf1.format(s.crois)+' %/an';
+  const noSale=s.rev>=s.dB; $('o-rev').value= noSale? 'pas de revente' : 'au bout de '+s.rev+' an'+(s.rev>1?'s':'');
+  syncPresets();
+
+  const A=loan(C,s.tA/100,s.dA,s.ass/100,s.insMode), B=loan(C,s.tB/100,s.dB,s.ass/100,s.insMode), cp=makeComparator(A,B);
+  const R=s.rend/100, fees=s.fees/100, tax=s.env, saleM=Math.min(s.rev*12,cp.H), withIra=s.ira&&!noSale;
+  const det=pathDiff(cp,R,fees,tax,s.ira);
+  const dSale=det.d[saleM], realF=Math.pow(1+s.infl/100, saleM/12);
+  const be=breakeven(cp,fees,tax,saleM,withIra), pure=breakeven(cp,0,0,cp.H,false);
+
+  const winner= Math.abs(dSale)<500? 'egal' : dSale>0? 'long' : 'court';
+  $('v-lab').textContent= noSale? 'Après '+s.dB+' ans, à la fin du prêt long, au rendement médian' : 'En revendant au bout de '+s.rev+' an'+(s.rev>1?'s':'')+', au rendement médian';
+  $('v-val').innerHTML= winner==='egal'? 'Match nul' : winner==='long'? '<span class="c-long">Le prêt long gagne</span>' : '<span class="c-court">Le prêt court gagne</span>';
+  $('v-txt').innerHTML= winner==='egal'? 'Les deux stratégies arrivent au même patrimoine, à quelques centaines d\'euros près.'
+    : 'Avance de <strong class="num">'+eur(Math.abs(dSale))+'</strong>, soit '+eur(Math.abs(dSale)/realF)+' en euros d\'aujourd\'hui. Budget mensuel commun&nbsp;: '+eur(cp.budget)+'.';
+  $('v-be').textContent= be===Infinity? '> 30 %' : be===-Infinity? 'aucun' : pct2(be);
+  $('v-pure').textContent= isFinite(pure)? pct2(pure) : '—';
+
+  $('k-A').innerHTML=kpiHTML('Prêt court · '+s.dA+' ans à '+nf2.format(s.tA)+' %','court',A,s,saleM);
+  $('k-B').innerHTML=kpiHTML('Prêt long · '+s.dB+' ans à '+nf2.format(s.tB)+' %','long',B,s,saleM);
+
+  simCtx={s,cp,det,saleM,noSale,withIra,R,fees,tax,mc:null};
+  drawSim();
+  clearTimeout(mcTimer);
+  if(s.vol>0){ $('v-mc').textContent='Simulation des marchés en cours…'; mcTimer=setTimeout(runSimMC, 120); }
+  else { $('v-mc').innerHTML='Volatilité nulle&nbsp;: rendement certain, pas de simulation de marché.'; }
+}
+function runSimMC(){
+  const c=simCtx; if(!c) return;
+  const res=monteCarloPath(c.cp,c.R,c.s.vol/100,c.fees,c.tax,c.s.ira,1500,CASE.seed);
+  c.mc=res; const y=Math.round(c.saleM/12), r=res[y];
+  $('v-mc').innerHTML='Sur 1&nbsp;500 marchés simulés (volatilité '+nf1.format(c.s.vol)+'&nbsp;%), le prêt long finit devant dans <strong class="num">'+pct0(r.pWin)+'</strong> des cas. Dans 8 cas sur 10, l\'écart est compris entre <span class="num">'+signed(r.p10)+'</span> et <span class="num">'+signed(r.p90)+'</span>.';
+  drawSim();
+}
+function drawSim(){
+  if(!window.Chart) return;
+  const T=theme(), c=simCtx; if(!c) return; const {s,cp,det,saleM,noSale}=c, Y=s.dB, step=Y>15?5:2;
+  // Écart dans le temps
+  { const o=linX(baseOpts(T,{xType:'linear', xTitle:'Année', yFmt:v=>keur(v), tipFmt:ctx=>ctx.dataset.label?' '+ctx.dataset.label+' : '+signed(ctx.raw.y):null}),0,Y,step);
+    o.plugins.tooltip.filter=ctx=>!!ctx.dataset.label;
+    o.plugins.tooltip.callbacks.title=items=>'Fin de l\'année '+items[0].raw.x;
+    const lines=[{axis:'y', value:0, color:T.axis}, {axis:'x', value:s.dA, color:T.axis, textColor:T.muted, label:'Fin du prêt court'}];
+    if(!noSale) lines.push({axis:'x', value:saleM/12, color:T.ink2, label:'Revente', row:1});
+    o.plugins.refLines.lines=lines;
+    const years=[...Array(Y+1).keys()], ds=[];
+    if(c.mc){
+      ds.push(lineDs('',years.map(y=>({x:y,y:c.mc[y].p90})),'transparent',{borderWidth:0,pointHoverRadius:0,order:4}));
+      ds.push(lineDs('',years.map(y=>({x:y,y:c.mc[y].p10})),'transparent',{borderWidth:0,pointHoverRadius:0,fill:'-1',backgroundColor:T.accentWash,order:3}));
+      ds.push(lineDs('1 cas sur 10 au-dessus',years.map(y=>({x:y,y:c.mc[y].p90})),T.ink2,{borderWidth:1,order:2}));
+      ds.push(lineDs('1 cas sur 10 en dessous',years.map(y=>({x:y,y:c.mc[y].p10})),T.ink2,{borderWidth:1,order:2}));
+    }
+    ds.push(lineDs('Rendement médian',years.map(y=>({x:y,y:det.d[y*12]})),T.ink,{order:1}));
+    $('lg-band').hidden=!c.mc;
+    upsert('s-diff','line',ds,o); }
+  // Argent disponible
+  { const pts=arr=>{ const a=[]; for(let m=1;m<=cp.H;m++) a.push({x:m/12, y:arr[m]}); return a; };
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Année', yFmt:v=>eur(v), yMin:0, tipFmt:ctx=>' '+ctx.dataset.label+' : '+eur(ctx.raw.y)+' / mois'}),0,Y,step);
+    o.plugins.tooltip.callbacks.title=items=>'Année '+Math.max(1,Math.ceil(items[0].raw.x));
+    upsert('s-dispo','line',[lineDs('Prêt court',pts(cp.freeA),T.court,{stepped:true}), lineDs('Prêt long',pts(cp.freeB),T.long,{stepped:true})],o); }
+  // Effort
+  { const g=s.crois/100, eff=L=>{ const a=[]; for(let y=0;y<Y;y++) a.push({x:y+1, y: y<L.years? L.pay[y*12+1]/(s.revenu*Math.pow(1+g,y)) : null}); return a; };
+    const top=Math.min(1.2, Math.max(0.4, Math.ceil(Math.max(cp.A.M,cp.B.M)/s.revenu*10+0.5)/10));
+    const o=linX(baseOpts(T,{xType:'linear', xTitle:'Année', yFmt:v=>nf0.format(v*100)+' %', yMin:0, yMax:top, tipFmt:ctx=>' '+ctx.dataset.label+' : '+pct1(ctx.raw.y)}),1,Y,Y>15?4:2);
+    o.plugins.tooltip.callbacks.title=items=>'Année '+items[0].raw.x;
+    o.plugins.refLines.lines=[{axis:'y', value:0.35, color:T.ink2, label:'35 %'}];
+    upsert('s-effort','line',[lineDs('Prêt court',eff(cp.A),T.court), lineDs('Prêt long',eff(cp.B),T.long)],o); }
+}
+
+function initSim(){
+  ids.concat(['ira']).forEach(k=>$(k).addEventListener('input',()=>update(k)));
+  $('form').addEventListener('submit',e=>e.preventDefault());
+  document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{ const p=PRESETS[b.dataset.p];
+    $('rend').value=p.rend; $('fees').value=p.fees; $('env').value=p.env; $('vol').value=p.vol; update('preset'); }));
+  update('init');
+}
+
+function renderCharts(){ buildStatic(); Object.keys(charts).filter(k=>k.startsWith('s-')).forEach(k=>{charts[k].destroy(); delete charts[k];}); drawSim(); }
+
+function boot(){
+  computeCase(); fillKeys();
+  if(!window.Chart){ document.querySelectorAll('.chart').forEach(c=>c.innerHTML='<p class="note">Les graphiques n\'ont pas pu se charger.</p>'); }
+  else {
+    Chart.register(refLines);
+    Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;
+    buildStatic();
+    const rerender=()=>requestAnimationFrame(renderCharts);
+    try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rerender); }catch(e){}
+    new MutationObserver(rerender).observe(document.documentElement,{attributes:true, attributeFilter:['data-theme']});
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(rerender);
+  }
+  initSim();
+  setTimeout(renderRobust, 50);
+}
+boot();
+</script>
+</body>
+</html>
