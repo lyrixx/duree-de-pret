@@ -150,6 +150,11 @@ select { font: inherit; font-size: .88rem; padding: .3rem .4rem; border: 1px sol
 .chips button:hover { border-color: var(--accent); color: var(--accent); }
 .chips button[aria-pressed="true"] { background: var(--accent-wash); border-color: var(--accent); color: var(--accent); }
 button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.actions button { font: inherit; font-size: .85rem; padding: .4rem .8rem; border-radius: 4px; border: 1px solid var(--accent); background: var(--accent-wash); color: var(--accent); cursor: pointer; }
+.actions button#reset-sim { border-color: var(--line); background: var(--bg); color: var(--ink-2); }
+.actions button:hover { filter: brightness(.97); }
+#link-fallback { width: 100%; font: inherit; font-size: .8rem; padding: .35rem .5rem; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); }
 .derived { font-size: .85rem; color: var(--ink-2); background: var(--accent-wash); border-radius: 4px; padding: .5rem .65rem; }
 
 .results { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
@@ -476,6 +481,15 @@ img { max-width: 100%; }
           <div class="ctl"><div class="row"><label for="infl">Inflation moyenne</label><output id="o-infl"></output></div><input type="range" id="infl" min="0" max="6" step="0.1" value="2"><span class="hint">Sert à exprimer les résultats en euros d'aujourd'hui</span></div>
           <div class="ctl"><div class="row"><label for="crois">Hausse annuelle des revenus</label><output id="o-crois"></output></div><input type="range" id="crois" min="0" max="5" step="0.1" value="2"></div>
           <div class="ctl"><div class="row"><label for="rev">Revente du bien</label><output id="o-rev"></output></div><input type="range" id="rev" min="1" max="25" step="1" value="25"><span class="hint">Tout à droite&nbsp;: pas de revente avant la fin du prêt long</span></div>
+        </div>
+        <div class="group">
+          <div class="eyebrow">Sauvegarde</div>
+          <p class="hint">Vos réglages sont enregistrés dans l'adresse de la page. Gardez-la en favori ou partagez-la.</p>
+          <div class="actions">
+            <button type="button" id="copy-link">Copier le lien</button>
+            <button type="button" id="reset-sim">Réinitialiser</button>
+          </div>
+          <input type="text" id="link-fallback" readonly hidden aria-label="Lien de la simulation">
         </div>
       </form>
 
@@ -1056,6 +1070,7 @@ function update(source){
   $('o-vol').value=nf1.format(s.vol)+' %'; $('o-infl').value=nf1.format(s.infl)+' %'; $('o-crois').value=nf1.format(s.crois)+' %/an';
   const noSale=s.rev>=s.dB; $('o-rev').value= noSale? 'pas de revente' : 'au bout de '+s.rev+' an'+(s.rev>1?'s':'');
   syncPresets();
+  writeUrl();
 
   const A=loan(C,s.tA/100,s.dA,s.ass/100,s.insMode), B=loan(C,s.tB/100,s.dB,s.ass/100,s.insMode), cp=makeComparator(A,B);
   const R=s.rend/100, fees=s.fees/100, tax=s.env, saleM=Math.min(s.rev*12,cp.H), withIra=s.ira&&!noSale;
@@ -1121,12 +1136,52 @@ function drawSim(){
     upsert('s-effort','line',[lineDs('Prêt court',eff(cp.A),T.court), lineDs('Prêt long',eff(cp.B),T.long)],o); }
 }
 
+/* ---------- Réglages du simulateur dans l'adresse de la page ---------- */
+const URLKEYS=ids.concat(['ira']), DEFAULTS={};
+let urlTimer=null;
+function inputVal(k){ const el=$(k); return el.type==='checkbox'? (el.checked?'1':'0') : el.value; }
+function setInput(k,v){
+  const el=$(k);
+  if(el.type==='checkbox'){ el.checked= v==='1'; return true; }
+  if(el.tagName==='SELECT'){ if(Array.from(el.options).some(o=>o.value===v)){ el.value=v; return true; } return false; }
+  const x=parseFloat(v); if(!isFinite(x)) return false;
+  el.value=String(Math.min(parseFloat(el.max),Math.max(parseFloat(el.min),x))); return true;
+}
+// Ordre important : la durée du prêt long fixe le maximum du curseur de revente
+const URL_ORDER=['prix','notaire','apport','revenu','dA','dB','tA','tB','ass','insMode','rend','fees','env','vol','infl','crois','rev','ira'];
+function applyValues(get){
+  let any=false;
+  URL_ORDER.forEach(k=>{ const v=get(k); if(v==null) return; if(k==='rev') $('rev').max=$('dB').value; if(setInput(k,v)) any=true; });
+  if(+$('dB').value<=+$('dA').value) $('dB').value=String(+$('dA').value+1);
+  $('rev').max=$('dB').value;
+  return any;
+}
+function applyUrl(){ try{ const q=new URLSearchParams(location.search); return applyValues(k=>q.has(k)? q.get(k) : null); }catch(e){ return false; } }
+function writeUrl(){
+  clearTimeout(urlTimer);
+  urlTimer=setTimeout(()=>{ try{
+    const q=new URLSearchParams(); URL_ORDER.forEach(k=>{ const v=inputVal(k); if(v!==DEFAULTS[k]) q.set(k,v); });
+    const qs=q.toString(); history.replaceState(null,'',location.pathname+(qs?'?'+qs:'')+location.hash);
+  }catch(e){} }, 200);
+}
+function copyLink(){
+  const btn=$('copy-link'), url=location.href, done=()=>{ btn.textContent='Lien copié'; setTimeout(()=>{ btn.textContent='Copier le lien'; },2000); };
+  const fallback=()=>{ const f=$('link-fallback'); f.value=url; f.hidden=false; f.focus(); f.select(); };
+  try{ navigator.clipboard.writeText(url).then(done, fallback); }catch(e){ fallback(); }
+}
+
 function initSim(){
+  URLKEYS.forEach(k=>DEFAULTS[k]=inputVal(k));
+  const fromUrl=applyUrl();
   ids.concat(['ira']).forEach(k=>$(k).addEventListener('input',()=>update(k)));
+  $('copy-link').addEventListener('click', copyLink);
+  $('reset-sim').addEventListener('click',()=>{ applyValues(k=>DEFAULTS[k]); $('link-fallback').hidden=true; update('reset'); });
   $('form').addEventListener('submit',e=>e.preventDefault());
   document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{ const p=PRESETS[b.dataset.p];
     $('rend').value=p.rend; $('fees').value=p.fees; $('env').value=p.env; $('vol').value=p.vol; update('preset'); }));
   update('init');
+  // Un lien partagé ouvre directement le simulateur
+  if(fromUrl && !location.hash) setTimeout(()=>$('simulateur').scrollIntoView(), 0);
 }
 
 function renderCharts(){ buildStatic(); Object.keys(charts).filter(k=>k.startsWith('s-')).forEach(k=>{charts[k].destroy(); delete charts[k];}); drawSim(); }
