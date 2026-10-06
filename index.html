@@ -373,7 +373,7 @@ img { max-width: 100%; }
   <section id="argument">
     <div class="head prose">
       <div class="eyebrow">4 · L'argument du prêt long</div>
-      <h2>« Avec un prêt long, t'as plus de sous à toi, et tu peux les placer&nbsp;»</h2>
+      <h2>« Avec un prêt long, on a plus d'argent à soi, et on peut le placer&nbsp;»</h2>
       <p>L'argument contient deux promesses&nbsp;: un meilleur niveau de vie, et un placement qui rapporte, ici 8&nbsp;% par an. On les teste séparément, parce qu'un même euro ne peut pas être à la fois dépensé et placé.</p>
     </div>
 
@@ -393,7 +393,7 @@ img { max-width: 100%; }
         <div><h3>Promesse 2&nbsp;: placer à 8&nbsp;%</h3><div class="sub">Patrimoine financier net de chaque ménage (placements nets d'impôt latent, moins capital restant dû), dans un PEA, à 8&nbsp;% par an sans aléa</div></div>
         <div class="legend"><span><span class="ln" style="background:var(--court)"></span>Prêt 15 ans</span><span><span class="ln" style="background:var(--long)"></span>Prêt 25 ans</span></div>
         <div class="chart"><canvas id="a-patri" aria-label="Patrimoine net des deux ménages à 8 %" role="img"></canvas></div>
-        <figcaption>Avec 8&nbsp;% garantis, ton pote a raison&nbsp;: après 25&nbsp;ans, le ménage à 25&nbsp;ans a <span data-k="d8" data-f="eur"></span> de plus, après frais et prélèvements sociaux. Le ménage à 15&nbsp;ans place plus, mais plus tard, et ses versements ont dix ans de moins pour fructifier.</figcaption>
+        <figcaption>Avec 8&nbsp;% garantis, le prêt long est plus rentable&nbsp;: après 25&nbsp;ans, le ménage à 25&nbsp;ans a <span data-k="d8" data-f="eur"></span> de plus, après frais et prélèvements sociaux. Le ménage à 15&nbsp;ans place plus, mais plus tard, et ses versements ont dix ans de moins pour fructifier.</figcaption>
       </figure>
       <figure>
         <div><h3>Mais 8&nbsp;% n'est qu'une moyenne</h3><div class="sub">Avance du 25&nbsp;ans après 25&nbsp;ans, sur 4&nbsp;000 marchés simulés (8&nbsp;% par an en médiane, volatilité 15&nbsp;%)</div></div>
@@ -455,7 +455,7 @@ img { max-width: 100%; }
             <button type="button" data-p="livret">Livret A</button>
             <button type="button" data-p="euros">Fonds euros</button>
             <button type="button" data-p="msci">MSCI World depuis 2000</button>
-            <button type="button" data-p="pote">Actions à 8 %</button>
+            <button type="button" data-p="actions">Actions à 8 %</button>
           </div>
           <div class="ctl"><div class="row"><label for="rend">Rendement brut annuel</label><output id="o-rend"></output></div><input type="range" id="rend" min="-1" max="12" step="0.01" value="8"><span class="hint">Médiane sur la période, avant frais et impôts</span></div>
           <div class="ctl"><div class="row"><label for="fees">Frais annuels</label><output id="o-fees"></output></div><input type="range" id="fees" min="0" max="2" step="0.01" value="0.38"></div>
@@ -614,7 +614,7 @@ img { max-width: 100%; }
         <li>Faites jouer la concurrence sur l'assurance. Sur capital initial, elle se paie chaque année ajoutée sur la totalité du prêt.</li>
         <li>Négociez la modulation et l'absence d'indemnités de remboursement anticipé. C'est ce qui permet de corriger le choix plus tard.</li>
       </ol>
-      <p><strong>Pour votre débat&nbsp;:</strong> le « plus court possible » est la bonne réponse par défaut. Le « plus long possible » est la bonne réponse pour celui qui place vraiment la différence en actions pendant 25&nbsp;ans et accepte de perdre environ 1 fois sur 4. Avoir à la fois « plus de sous à soi » et « tout placer », en revanche, c'est impossible.</p>
+      <p><strong>En résumé&nbsp;:</strong> le « plus court possible » est la bonne réponse par défaut. Le « plus long possible » est la bonne réponse pour celui qui place vraiment la différence en actions pendant 25&nbsp;ans et accepte de perdre environ 1 fois sur 4. Avoir à la fois « plus de sous à soi » et « tout placer », en revanche, c'est impossible.</p>
     </div>
   </section>
 
@@ -991,7 +991,7 @@ function renderRobust(){
 const $=id=>document.getElementById(id);
 const ids=['prix','notaire','apport','revenu','dA','tA','dB','tB','ass','insMode','rend','fees','env','vol','infl','crois','rev'];
 function readState(){ const s={}; ids.forEach(k=>s[k]=$(k).tagName==='SELECT'&&k==='insMode'? $(k).value : parseFloat($(k).value)); s.ira=$('ira').checked; return s; }
-const PRESETS={ livret:{rend:1.7,fees:0,env:'0',vol:0}, euros:{rend:2.63,fees:0,env:'0.172',vol:0}, msci:{rend:6.67,fees:0.38,env:'0.186',vol:15}, pote:{rend:8,fees:0.38,env:'0.186',vol:15} };
+const PRESETS={ livret:{rend:1.7,fees:0,env:'0',vol:0}, euros:{rend:2.63,fees:0,env:'0.172',vol:0}, msci:{rend:6.67,fees:0.38,env:'0.186',vol:15}, actions:{rend:8,fees:0.38,env:'0.186',vol:15} };
 function syncPresets(){ const s={rend:+$('rend').value, fees:+$('fees').value, env:$('env').value, vol:+$('vol').value};
   document.querySelectorAll('#presets button').forEach(b=>{ const p=PRESETS[b.dataset.p]; b.setAttribute('aria-pressed', String(Math.abs(p.rend-s.rend)<1e-9 && Math.abs(p.fees-s.fees)<1e-9 && p.env===s.env && Math.abs(p.vol-s.vol)<1e-9)); }); }
 
