@@ -166,6 +166,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .kpi dt { color: var(--ink-2); }
 .kpi dd { margin: 0; font-family: var(--f-data); text-align: right; font-variant-numeric: tabular-nums; }
 .kpi dd.strong { font-weight: 500; color: var(--ink); }
+.kpi .inv { border-top: 1px solid var(--line); padding-top: .6rem; display: flex; flex-direction: column; gap: .45rem; }
+.kpi .inv-h { font-size: .78rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-family: var(--f-data); }
+.kpi .rythme { font-size: .88rem; color: var(--ink-2); }
 .flags { display: flex; flex-wrap: wrap; gap: .35rem; min-height: 0; }
 .flag { font-size: .75rem; padding: .15rem .5rem; border-radius: 3px; background: var(--warn-bg); color: var(--warn-ink); }
 .flag.ok { background: transparent; color: var(--good); border: 1px solid currentColor; }
@@ -691,14 +694,16 @@ function netWorth(V,K,tax,crd,L,withIra){ return V - tax*Math.max(0,V-K) - crd -
 // Trajectoire déterministe : renvoie l'écart B − A pour chaque mois (évalué « si l'on revend ce mois-là »)
 function pathDiff(cp, R, fees, tax, withIra){
   const g=Math.pow((1+R)*(1-fees),1/12)-1; let VA=0,KA=0,VB=0,KB=0; const d=[netWorth(0,0,tax,cp.B.C,cp.B,withIra)-netWorth(0,0,tax,cp.A.C,cp.A,withIra)], wa=[], wb=[];
+  const va=[0], ka=[0], vb=[0], kb=[0]; // valeur des placements et cumul des versements, mois par mois
   wa.push(-cp.A.C); wb.push(-cp.B.C);
   for(let m=1;m<=cp.H;m++){
     VA=VA*(1+g)+cp.freeA[m]; KA+=cp.freeA[m]; VB=VB*(1+g)+cp.freeB[m]; KB+=cp.freeB[m];
+    va.push(VA); ka.push(KA); vb.push(VB); kb.push(KB);
     const ca=m<=cp.A.n?cp.A.crd[m]:0, cb=m<=cp.B.n?cp.B.crd[m]:0;
     const na=netWorth(VA,KA,tax,ca,cp.A,withIra), nb=netWorth(VB,KB,tax,cb,cp.B,withIra);
     wa.push(na); wb.push(nb); d.push(nb-na);
   }
-  return {d,wa,wb};
+  return {d,wa,wb,va,ka,vb,kb};
 }
 function diffAt(cp,R,fees,tax,m,withIra){ return pathDiff(cp,R,fees,tax,withIra).d[m]; }
 // Rendement brut annuel qui égalise les deux stratégies au mois m (bissection ; l'écart croît avec R)
@@ -995,7 +1000,7 @@ const PRESETS={ livret:{rend:1.7,fees:0,env:'0',vol:0}, euros:{rend:2.63,fees:0,
 function syncPresets(){ const s={rend:+$('rend').value, fees:+$('fees').value, env:$('env').value, vol:+$('vol').value};
   document.querySelectorAll('#presets button').forEach(b=>{ const p=PRESETS[b.dataset.p]; b.setAttribute('aria-pressed', String(Math.abs(p.rend-s.rend)<1e-9 && Math.abs(p.fees-s.fees)<1e-9 && p.env===s.env && Math.abs(p.vol-s.vol)<1e-9)); }); }
 
-function kpiHTML(title, cls, L, s, saleM){
+function kpiHTML(title, cls, L, s, saleM, inv){
   const d=Math.pow(1+s.infl/100,1/12)-1; let pv=0; for(let m=1;m<=L.n;m++) pv+=L.pay[m]/Math.pow(1+d,m);
   const crdSale= saleM<L.n? L.crd[saleM] : 0, effort=L.M/s.revenu;
   const flags=[];
@@ -1010,7 +1015,25 @@ function kpiHTML(title, cls, L, s, saleM){
     '<dt>Coût total</dt><dd class="strong">'+eur(L.cost)+'</dd>'+
     '<dt>Coût en euros d\'aujourd\'hui</dt><dd>'+eur(pv-L.C)+'</dd>'+
     (saleM<L.n ? '<dt>Capital dû à la revente</dt><dd>'+eur(crdSale)+'</dd>' : '')+
-    '</dl><div class="flags">'+flags.join('')+'</div>';
+    '</dl>'+invHTML(L, s, saleM, inv)+'<div class="flags">'+flags.join('')+'</div>';
+}
+// Bloc « argent placé » : versements, valeur, gains, impôt et patrimoine net à la date d'évaluation
+function invHTML(L, s, saleM, inv){
+  const {free, V, Kc, nw, H}=inv, v=V[saleM], k=Kc[saleM], gain=v-k, impot=s.env*Math.max(0,gain);
+  const first=free[1], after= L.n<H ? free[Math.min(H,L.n+1)] : null;
+  const rythme = after==null ? eur(first)+' par mois'
+    : (first<1 ? 'rien pendant '+L.years+' ans, puis '+eur(after)+' par mois' : eur(first)+' par mois, puis '+eur(after)+' après '+L.years+' ans');
+  const crd= saleM<L.n? L.crd[saleM] : 0, pen= s.ira&&crd>0? ira(crd,L.rate) : 0;
+  const quand= saleM>=H? 'après '+(H/12)+' ans' : 'à la revente ('+(saleM/12)+' ans)';
+  return '<div class="inv"><div class="inv-h">Argent placé, '+quand+'</div><p class="rythme">Versements&nbsp;: '+rythme+'</p><dl>'+
+    '<dt>Total versé</dt><dd>'+eur(k)+'</dd>'+
+    '<dt>Valeur des placements</dt><dd>'+eur(v)+'</dd>'+
+    '<dt>dont gains</dt><dd>'+eur(gain)+'</dd>'+
+    '<dt>Impôt sur les gains</dt><dd>'+(impot>0?'−'+eur(impot):eur(0))+'</dd>'+
+    (crd>0? '<dt>Capital restant dû</dt><dd>−'+eur(crd)+'</dd>' : '')+
+    (pen>0? '<dt>Indemnités de remboursement</dt><dd>−'+eur(pen)+'</dd>' : '')+
+    '<dt>Patrimoine financier net</dt><dd class="strong">'+eur(nw[saleM])+'</dd>'+
+    '</dl></div>';
 }
 
 let mcTimer=null, simCtx=null;
@@ -1048,8 +1071,8 @@ function update(source){
   $('v-be').textContent= be===Infinity? '> 30 %' : be===-Infinity? 'aucun' : pct2(be);
   $('v-pure').textContent= isFinite(pure)? pct2(pure) : '—';
 
-  $('k-A').innerHTML=kpiHTML('Prêt court · '+s.dA+' ans à '+nf2.format(s.tA)+' %','court',A,s,saleM);
-  $('k-B').innerHTML=kpiHTML('Prêt long · '+s.dB+' ans à '+nf2.format(s.tB)+' %','long',B,s,saleM);
+  $('k-A').innerHTML=kpiHTML('Prêt court · '+s.dA+' ans à '+nf2.format(s.tA)+' %','court',A,s,saleM,{free:cp.freeA, V:det.va, Kc:det.ka, nw:det.wa, H:cp.H});
+  $('k-B').innerHTML=kpiHTML('Prêt long · '+s.dB+' ans à '+nf2.format(s.tB)+' %','long',B,s,saleM,{free:cp.freeB, V:det.vb, Kc:det.kb, nw:det.wb, H:cp.H});
 
   simCtx={s,cp,det,saleM,noSale,withIra,R,fees,tax,mc:null};
   drawSim();
